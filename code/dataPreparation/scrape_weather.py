@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 url = "https://opendata.dwd.de/climate_environment/CDC/event_catalogues/germany/precipitation/CatRaRE_v2024.01/data/"
 
 # Directory to save the file
-save_directory = "data/"
+save_directory = "data/scraped"
 os.makedirs(save_directory, exist_ok=True)  # Ensure the directory exists
 
 # File name and path

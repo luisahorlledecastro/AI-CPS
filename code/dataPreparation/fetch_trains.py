@@ -13,7 +13,7 @@ def scrape_csv_data():
         df = pd.read_csv(url)
         
         # Save the data to a local CSV file
-        df.to_csv('./data/scraped_data.csv', index=False)
+        df.to_csv('./data/scraped/scraped_data.csv', index=False)
         
         print("Data successfully scraped and saved to 'scraped_heatmap_data.csv'")
         print(f"Shape of the data: {df.shape}")
