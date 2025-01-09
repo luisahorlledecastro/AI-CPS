@@ -4,6 +4,8 @@ Necessary column descriptions:
 - End_Time: End time of the weather observation
 - x_RRmax: x-coordinate of the maximum precipitation
 - y_RRmax: y-coordinate of the maximum precipitation
+- BDL_RRmax: State of the precipitation
+- LKS_RRmax: City of the precipitation
 - RRmax: Maximum precipitation amount
 - Duration: Duration of the precipitation event
 - Area: Affected area of the precipitation event
@@ -17,7 +19,7 @@ import pandas as pd
 def remove_columns(df): # Remove unnecessary columns for easier analysis
 
     columns_to_keep = [
-        "Start_Time", "End_Time", "x_RRmax", "y_RRmax", "RRmax", "Duration", "Area", "RRmean"
+        "Start_Time", "End_Time", "x_RRmax", "y_RRmax", "RRmax", "Duration", "Area", "RRmean","BDL_RRmax","LKS_RRmax"
     ]
     return df[[col for col in df.columns if col in columns_to_keep or col.startswith("V3_") or col.startswith("V4_")]]
 
@@ -67,5 +69,6 @@ except Exception as e:
 # print(df.columns.tolist())
 
 # check out the difference in rows - commented out after checking
+# print(f"Shape of the data: {df.shape}")
 # print("\nFirst few rows of data:")
 # print(df.head())

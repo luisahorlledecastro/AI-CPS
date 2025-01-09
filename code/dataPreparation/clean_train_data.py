@@ -12,8 +12,8 @@ df = pd.read_csv('data/scraped/scraped_data.csv')
 # print(df.columns.tolist())
 
 # Display first few rows to understand the data structure - commented out after checking
-# print("\nFirst few rows of data:")
-# print(df.head())
+print("\nFirst few rows of data:")
+print(df.head())
 
 def clean_and_preprocess(df):
     # Make a copy of the dataframe
@@ -55,3 +55,7 @@ cleaned_df = clean_and_preprocess(df)
 cleaned_df.to_csv('data/cleaned/cleaned_data.csv', index=False)
 
 print("Data cleaning completed. File saved as 'data/cleaned/cleaned_data.csv'")
+
+# # Display first few rows to understand the data structure - commented out after checking
+print("\nFirst few rows of data:")
+print(cleaned_df.head())
