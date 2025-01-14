@@ -3,7 +3,9 @@
 # import libraries
 from meteostat import Point, Hourly
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import timedelta
+import os
+from sklearn.model_selection import train_test_split
 
 
 # load data
@@ -69,13 +71,66 @@ def add_weather_data(df):
 
     return df
 
+def save_df(df, output):
+    """
+    Save a DataFrame to a CSV file.
 
-# Add temperature and rain status to the DataFrame
-df_db = add_weather_data(df_db)
+    Parameters:
+    df (pd.DataFrame): The DataFrame to be saved.
+    output (str): The path to the output CSV file.
+    """
+    # Directory to save the file
+    save_directory = "../../data/cleaned"
+    os.makedirs(save_directory, exist_ok=True)  # Ensure the directory exists
 
-# Display the updated DataFrame
-print(df_db.head())
+    # File name and path
+    csv_file_name = output
+    output = os.path.join(save_directory, csv_file_name)
+    try:
+        df.to_csv(output, index=False)
+        print(f"DataFrame successfully saved to {output}")
+    except Exception as e:
+        print(f"Error saving DataFrame: {e}")
 
 
+def split_and_save_data(df, train_data_file, test_data_file, activation_file):
+    """
+    Splits a dataset into training and test datasets, and saves them to CSV files.
+    Additionally, creates a CSV file with one entry from the test dataset.
+
+    Parameters:
+    df (pd.DataFrame): The DataFrame to split.
+    output_dir (str): The directory where the CSV files will be saved.
+    """
+    # Directory to save the file
+    save_directory = "../../data/cleaned"
+    os.makedirs(save_directory, exist_ok=True)  # Ensure the directory exists
+
+    try:
+        # Split the dataset into training (80%) and test (20%) datasets
+        train_df, test_df = train_test_split(df, test_size=0.2, random_state=42)
+
+        # Save training data to CSV
+        train_path = os.path.join(save_directory, train_data_file)
+        train_df.to_csv(train_path, index=False)
+        print(f"Training data saved to {train_path}")
+
+        # Save test data to CSV
+        test_path = os.path.join(save_directory, test_data_file)
+        test_df.to_csv(test_path, index=False)
+        print(f"Test data saved to {test_path}")
+
+        # Save one entry from the test data to a separate CSV
+        single_entry_path = os.path.join(save_directory, activation_file)
+        test_df.iloc[:1].to_csv(single_entry_path, index=False)
+        print(f"Single test entry saved to {single_entry_path}")
+
+    except Exception as e:
+        print(f"Error processing the data: {e}")
 
 
+if __name__ == '__main__':
+    df_db = add_weather_data(df_db)
+    save_df(df_db, 'joint_data_collection.csv')
+    split_and_save_data(df_db, "training_data.csv", "test_data.csv",
+                        "activation_data.csv")
