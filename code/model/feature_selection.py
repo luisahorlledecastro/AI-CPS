@@ -28,14 +28,13 @@ def handle_numeric_data(df):
     return df
 
 
-def feature_selection(data, target_column, method="univariate", k=10):
+def feature_selection(data, target_column, k=10):
     """
     Preprocess the data and perform feature selection.
 
     Parameters:
         data (pd.DataFrame): The input dataset.
         target_column (str): The name of the target column.
-        method (str): The method for feature selection ('univariate', 'tree_based', 'mutual_info').
         k (int): The number of top features to select (for univariate and mutual_info).
 
     Returns:
@@ -45,25 +44,11 @@ def feature_selection(data, target_column, method="univariate", k=10):
     X = data.drop(columns=[target_column])
     y = data[target_column]
 
-    # Feature selection
-    if method == "univariate":
-        selector = SelectKBest(score_func=f_classif, k=k)
-        X_new = selector.fit_transform(X, y)
-        selected_features = X.columns[selector.get_support()]
-    elif method == "mutual_info":
-        selector = SelectKBest(score_func=mutual_info_classif, k=k)
-        X_new = selector.fit_transform(X, y)
-        selected_features = X.columns[selector.get_support()]
-    elif method == "tree_based":
-        model = ExtraTreesClassifier()
-        model.fit(X, y)
-        importance = model.feature_importances_
-        selected_features = X.columns[np.argsort(importance)[-k:]]
-        X_new = X[selected_features]
-    else:
-        raise ValueError("Invalid method. Choose 'univariate', 'tree_based', or 'mutual_info'.")
+    selector = SelectKBest(score_func=f_classif, k=k)
+    X_new = selector.fit_transform(X, y)
+    selected_features = X.columns[selector.get_support()]
 
-    print(f"Selected features using {method} method: {list(selected_features)}")
+    print(f"Selected features using univariate method: {list(selected_features)}")
     return data[selected_features.to_list() + [target_column]]
 
 
@@ -75,6 +60,14 @@ def plot_correlation_matrix(data):
 
 if __name__ == '__main__':
     df = handle_numeric_data(df)
-    selected_data = feature_selection(df, target_column="arrival_delay_m", method="univariate", k=5)
+    selected_data_univariate = feature_selection(df, target_column="arrival_delay_m", k=5)
     plot_correlation_matrix(df)
     print(df.columns)
+
+    print(selected_data_univariate)
+
+
+
+"""
+target highly correlated with departure_delay_m, date
+"""
