@@ -14,7 +14,7 @@ data = pd.read_csv("/Users/luisahorlledecastro/Downloads/DBtrainrides.csv").drop
              'departure_change', 'arrival_delay_m', 'departure_delay_m', 'info',
              'arrival_delay_check', 'departure_delay_check']).drop_duplicates()
 
-df = data[data["state"] == ("Berlin" or "Brandenburg")]
+df = data[data["state"] == ("Berlin" and "Brandenburg")]
 
 # Directory to save the file
 save_directory = "../../data/cleaned"
