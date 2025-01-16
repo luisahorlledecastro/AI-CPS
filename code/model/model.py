@@ -5,6 +5,7 @@ from tensorflow.keras.layers import Dense, Dropout, BatchNormalization
 import pandas as pd
 import matplotlib.pyplot as plt
 
+import feature_selection as sf
 
 # load data
 training_data = pd.read_csv('../../data/cleaned/training_data.csv')
@@ -34,6 +35,7 @@ class CustomEarlyStopping(tf.keras.callbacks.Callback):
                 print(f"\nEarly stopping at epoch {epoch + 1}")
                 self.model.stop_training = True
                 self.model.set_weights(self.best_weights)
+
 
 # Custom ReduceLROnPlateau Callback
 class CustomReduceLROnPlateau(tf.keras.callbacks.Callback):
@@ -76,12 +78,10 @@ def handle_numeric_data(df):
 
 def build_model(train, test, target_column, epochs=50, batch_size=64):
     # Preprocessing
-    X_train = train.drop(columns=[target_column])
+    X_train = train.drop(target_column, axis=1)
     y_train = train[target_column]
 
-    print(X_train)
-
-    X_test = test.drop(columns=[target_column])
+    X_test = test.drop(target_column, axis=1)
     y_test = test[target_column]
 
     # Scale features
@@ -146,10 +146,22 @@ def plot_training_history(history):
 
 
 if __name__ == '__main__':
-    train_data = handle_numeric_data(training_data)
+    training_data = sf.feature_selection(handle_numeric_data(training_data), target_column="arrival_delay_m", k=5)
+    test_data = handle_numeric_data(test_data[training_data.columns])
+
+    """    training_data = handle_numeric_data(training_data)
     test_data = handle_numeric_data(test_data)
 
-    model, history = build_model(training_data, test_data, 'arrival_delay_m', epochs=500, batch_size=64)
+    columns_to_drop_based_on_corr_matrix = ['state',
+                                            'departure_plan_hour', 'departure_plan_datetime']
+
+    training_data = training_data.drop(columns=columns_to_drop_based_on_corr_matrix)
+    test_data = test_data.drop(columns=columns_to_drop_based_on_corr_matrix)"""
+
+    print(training_data.head())
+    print(test_data.head())
+
+    model, history = build_model(training_data, test_data, 'arrival_delay_m', epochs=50, batch_size=64)
     plot_training_history(history)
     predictions = model.predict(test_data.drop(columns=['arrival_delay_m']))
 
