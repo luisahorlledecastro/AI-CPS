@@ -74,67 +74,19 @@ def handle_numeric_data(df):
     return df
 
 
-from imblearn.over_sampling import SMOTE
+def build_model(train, test, target_column, epochs=50, batch_size=64):
+    # Preprocessing
+    X_train = train.drop(columns=[target_column])
+    y_train = train[target_column]
 
-def handle_numeric_data_with_smote(df, target_column):
-    """
-    Handle non-numeric data and apply SMOTE for oversampling the minority class.
+    print(X_train)
 
-    Parameters:
-        df (pd.DataFrame): Input DataFrame.
-        target_column (str): The name of the target column.
-
-    Returns:
-        X_resampled (pd.DataFrame): Resampled features.
-        y_resampled (pd.Series): Resampled target.
-    """
-    # Separate features and target
-    X = df.drop(columns=[target_column])
-    y = df[target_column]
-
-    # Handle non-numeric data
-    for col in X.columns:
-        if X[col].dtype == 'object':
-            le = LabelEncoder()
-            X[col] = le.fit_transform(X[col].astype(str))
-
-    # Apply SMOTE
-    smote = SMOTE(random_state=42)
-    X_resampled, y_resampled = smote.fit_resample(X, y)
-
-    return X_resampled, y_resampled
-
-
-def build_model_with_smote(train, test, target_column, epochs=50, batch_size=64):
-    """
-    Build, train, and evaluate an ANN model using SMOTE for balancing the dataset.
-
-    Parameters:
-        train (pd.DataFrame): Training data.
-        test (pd.DataFrame): Testing data.
-        target_column (str): The name of the target column.
-        epochs (int): Number of training epochs.
-        batch_size (int): Batch size for training.
-
-    Returns:
-        model: Trained Keras model.
-        history: Training history.
-    """
-    # Handle non-numeric data and apply SMOTE
-    X_train_resampled, y_train_resampled = handle_numeric_data_with_smote(train, target_column)
-
-    # Preprocess test data
     X_test = test.drop(columns=[target_column])
     y_test = test[target_column]
 
-    for col in X_test.columns:
-        if X_test[col].dtype == 'object':
-            le = LabelEncoder()
-            X_test[col] = le.fit_transform(X_test[col].astype(str))
-
     # Scale features
     scaler = StandardScaler()
-    X_train_scaled = scaler.fit_transform(X_train_resampled)
+    X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
 
     # Build the ANN model
@@ -154,12 +106,17 @@ def build_model_with_smote(train, test, target_column, epochs=50, batch_size=64)
                   loss='binary_crossentropy',
                   metrics=['accuracy'])
 
+    # Custom callbacks
+    early_stopping = CustomEarlyStopping(patience=5)
+    reduce_lr = CustomReduceLROnPlateau(factor=0.5, patience=3)
+
     # Train the model
     history = model.fit(
-        X_train_scaled, y_train_resampled,
+        X_train_scaled, y_train,
         validation_split=0.2,
         epochs=epochs,
         batch_size=batch_size,
+        callbacks=[early_stopping, reduce_lr],
         verbose=1
     )
 
@@ -189,9 +146,10 @@ def plot_training_history(history):
 
 
 if __name__ == '__main__':
-    print(training_data[training_data["state"] == "Brandenburg"]['arrival_delay_m'].value_counts())
+    train_data = handle_numeric_data(training_data)
+    test_data = handle_numeric_data(test_data)
 
-    model, history = build_model_with_smote(training_data, test_data, 'arrival_delay_m')
+    model, history = build_model(training_data, test_data, 'arrival_delay_m', epochs=500, batch_size=64)
     plot_training_history(history)
     predictions = model.predict(test_data.drop(columns=['arrival_delay_m']))
 
