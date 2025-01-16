@@ -2,10 +2,11 @@ import pandas as pd
 import os
 
 # Create cleaned directory if it doesn't exist
-os.makedirs('data/cleaned', exist_ok=True)
+save_directory = "../../data/cleaned"
+os.makedirs(save_directory, exist_ok=True)  # Ensure the directory exists
 
 # Read the CSV file
-df = pd.read_csv('data/scraped/scraped_data.csv')
+df = pd.read_csv('../../data/scraped/scraped_data.csv')
 
 # Print column names to see what we're working with - commented out after checking
 # print("Available columns:")
@@ -14,6 +15,7 @@ df = pd.read_csv('data/scraped/scraped_data.csv')
 # Display first few rows to understand the data structure - commented out after checking
 # print("\nFirst few rows of data:")
 # print(df.head())
+
 
 def clean_and_preprocess(df):
     # Make a copy of the dataframe
@@ -45,6 +47,7 @@ def clean_and_preprocess(df):
     df['date'] = df['departure_plan_datetime'].dt.date
     df['hour'] = df['departure_plan_datetime'].dt.hour
     df['day_of_week'] = df['departure_plan_datetime'].dt.day_of_week
+    df['arrival_delay_m'] = round(df['arrival_delay_m'])
     
     return df
 
@@ -52,6 +55,6 @@ def clean_and_preprocess(df):
 cleaned_df = clean_and_preprocess(df)
 
 # Save the cleaned dataset
-cleaned_df.to_csv('data/cleaned/cleaned_data.csv', index=False)
+cleaned_df.to_csv('../../data/cleaned/cleaned_data.csv', index=False)
 
-print("Data cleaning completed. File saved as 'data/cleaned/cleaned_data.csv'")
+print("Data cleaning completed. File saved as '../../data/cleaned/cleaned_data.csv'")
