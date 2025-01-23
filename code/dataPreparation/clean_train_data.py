@@ -55,4 +55,6 @@ def clean_and_preprocess(df):
 cleaned_df = clean_and_preprocess(df)
 
 # Save the cleaned dataset
-cleaned_df.t
+cleaned_df.to_csv('../../data/cleaned/cleaned_data.csv', index=False)
+
+print("Data cleaning completed. File saved as '../../data/cleaned/cleaned_data.csv'")
