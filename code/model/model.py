@@ -4,12 +4,14 @@ from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Dense, Dropout, BatchNormalization
 import pandas as pd
 import matplotlib.pyplot as plt
+from tensorflow.keras.regularizers import l2
+
 
 import feature_selection as sf
 
 # load data
-training_data = pd.read_csv('../../data/cleaned/training_data.csv')
-test_data = pd.read_csv('../../data/cleaned/test_data.csv')
+training_data_pre_selection = pd.read_csv('../../data/cleaned/training_data.csv')
+test_data_pre_selection = pd.read_csv('../../data/cleaned/test_data.csv')
 
 
 # Custom EarlyStopping Callback
@@ -93,11 +95,10 @@ def build_model(train, test, target_column, epochs=50, batch_size=64):
     model = Sequential([
         Dense(128, activation='relu', input_shape=(X_train_scaled.shape[1],)),
         BatchNormalization(),
-        Dropout(0.4),
-        Dense(64, activation='relu'),
+        Dropout(0.2),
+        Dense(64, activation='linear'),
         BatchNormalization(),
-        Dropout(0.3),
-        Dense(32, activation='relu'),
+        Dropout(0.1),
         Dense(1, activation='sigmoid')  # Binary classification output
     ])
 
@@ -146,8 +147,9 @@ def plot_training_history(history):
 
 
 if __name__ == '__main__':
-    training_data = sf.feature_selection(handle_numeric_data(training_data), target_column="arrival_delay_m", k=5)
-    test_data = handle_numeric_data(test_data[training_data.columns])
+    training_data = sf.feature_selection(handle_numeric_data(training_data_pre_selection), target_column="arrival_delay_m", k=5)
+    training_data["rained"] = training_data_pre_selection["rained"]
+    test_data = handle_numeric_data(test_data_pre_selection[training_data.columns])
 
     """    training_data = handle_numeric_data(training_data)
     test_data = handle_numeric_data(test_data)
@@ -158,8 +160,8 @@ if __name__ == '__main__':
     training_data = training_data.drop(columns=columns_to_drop_based_on_corr_matrix)
     test_data = test_data.drop(columns=columns_to_drop_based_on_corr_matrix)"""
 
-    print(training_data.head())
-    print(test_data.head())
+    print(training_data.columns)
+    print(test_data.columns)
 
     model, history = build_model(training_data, test_data, 'arrival_delay_m', epochs=50, batch_size=64)
     plot_training_history(history)
