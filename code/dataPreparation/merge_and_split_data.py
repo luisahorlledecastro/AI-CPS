@@ -71,6 +71,7 @@ def add_weather_data(df):
 
     return df
 
+
 def save_df(df, output):
     """
     Save a DataFrame to a CSV file.

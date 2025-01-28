@@ -16,8 +16,31 @@ df = pd.read_csv('../../data/scraped/scraped_data.csv')
 # print("\nFirst few rows of data:")
 # print(df.head())
 
+import pandas as pd
 
-def clean_and_preprocess(df):
+
+def filter_iqr(df, target, lower_bound=0.25, upper_bound=0.75):
+    """
+    Filters the rows of a dataframe to keep only the data within slected bounds for a specific column.
+
+    Args:
+        dataframe (pd.DataFrame): The dataframe containing the data.
+        column (str): The column name to filter based on the IQR.
+
+    Returns:
+        pd.DataFrame: A filtered dataframe with rows within the IQR range for the specified column.
+    """
+    q1 = df[target].quantile(lower_bound)
+    q3 = df[target].quantile(upper_bound)
+    iqr = q3 - q1  # Interquartile range
+
+    # Filter rows within the IQR
+    filtered_df = df[(df[target] >= q1) & (df[target] <= q3)]
+
+    return filtered_df
+
+
+def clean_and_preprocess(df, target='arrival_delay_m'):
     # Make a copy of the dataframe
     df = df.copy()
     
@@ -27,6 +50,7 @@ def clean_and_preprocess(df):
     # Convert numeric columns
     numeric_cols = ['category', 'long', 'lat', 'arrival_delay_m', 
                    'departure_delay_m', 'departure_plan_hour']
+
     for col in numeric_cols:
         df[col] = pd.to_numeric(df[col], errors='coerce')
     
@@ -34,14 +58,7 @@ def clean_and_preprocess(df):
     df = df.dropna(how='all')
     
     # Handle extreme outliers in delay columns
-    delay_cols = ['arrival_delay_m', 'departure_delay_m']
-    for col in delay_cols:
-        q1 = df[col].quantile(0.25)
-        q3 = df[col].quantile(0.75)
-        iqr = q3 - q1
-        lower_bound = q1 - (1.5 * iqr)
-        upper_bound = q3 + (1.5 * iqr)
-        df[col] = df[col].clip(lower_bound, upper_bound)
+    df = filter_iqr(df, target, lower_bound=0.25, upper_bound=0.75)
     
     # Add useful features
     df['date'] = df['departure_plan_datetime'].dt.date
@@ -51,6 +68,7 @@ def clean_and_preprocess(df):
     
     return df
 
+
 # Apply cleaning and preprocessing
 cleaned_df = clean_and_preprocess(df)
 
@@ -59,6 +77,4 @@ cleaned_df.to_csv('../../data/cleaned/cleaned_data.csv', index=False)
 
 print("Data cleaning completed. File saved as '../../data/cleaned/cleaned_data.csv'")
 
-
-
-# TODO add data source to README.learningBase.md
+#  TODO add data source to README.learningBase.md
