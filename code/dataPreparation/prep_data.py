@@ -23,12 +23,12 @@ def prep_data():
 
     # step 4
     # add weather data
-    df = add_weather_data(df_trains)
+    df = add_weather_data(df).dropna()
 
     # step 5
     # split and save files
-    #split_and_save_data(df, "training_data.csv", "test_data.csv",
-                     #   "activation_data.csv")
+    split_and_save_data(df, "training_data.csv", "test_data.csv",
+                        "activation_data.csv")
 
     return df
 

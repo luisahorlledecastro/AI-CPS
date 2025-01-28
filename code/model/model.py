@@ -4,12 +4,10 @@ from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Dense, Dropout, BatchNormalization
 import pandas as pd
 import matplotlib.pyplot as plt
-from tensorflow.keras.regularizers import l2
-
-
+import seaborn as sns
 import feature_selection as sf
 
-# load data
+# Load data
 training_data_pre_selection = pd.read_csv('../../data/cleaned/training_data.csv')
 test_data_pre_selection = pd.read_csv('../../data/cleaned/test_data.csv')
 
@@ -59,14 +57,15 @@ class CustomReduceLROnPlateau(tf.keras.callbacks.Callback):
         else:
             self.wait += 1
             if self.wait >= self.patience:
-                old_lr = float(tf.keras.backend.get_value(self.model.optimizer.learning_rate))
-                if old_lr > self.min_lr:
+                old_lr = tf.keras.backend.get_value(self.model.optimizer.learning_rate)
+                if isinstance(old_lr, (float, int)) and old_lr > self.min_lr:
                     new_lr = max(old_lr * self.factor, self.min_lr)
                     tf.keras.backend.set_value(self.model.optimizer.learning_rate, new_lr)
                     print(f"\nEpoch {epoch + 1}: Reducing learning rate to {new_lr}.")
                 self.wait = 0
 
 
+# Preprocessing function
 def handle_numeric_data(df):
     # Handle non-numeric data
     for col in df.columns:
@@ -74,10 +73,10 @@ def handle_numeric_data(df):
             # Label encoding for simplicity
             le = LabelEncoder()
             df[col] = le.fit_transform(df[col].astype(str))
-
     return df
 
 
+# Build model function
 def build_model(train, test, target_column, epochs=50, batch_size=64):
     # Preprocessing
     X_train = train.drop(target_column, axis=1)
@@ -102,8 +101,8 @@ def build_model(train, test, target_column, epochs=50, batch_size=64):
         Dense(1, activation='sigmoid')  # Binary classification output
     ])
 
-    # Compile the model
-    model.compile(optimizer='adam',
+    # Compile the model with explicit optimizer
+    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
                   loss='binary_crossentropy',
                   metrics=['accuracy'])
 
@@ -128,6 +127,7 @@ def build_model(train, test, target_column, epochs=50, batch_size=64):
     return model, history
 
 
+# Plot training history
 def plot_training_history(history):
     plt.plot(history.history['accuracy'], label='Training Accuracy')
     plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
@@ -146,25 +146,33 @@ def plot_training_history(history):
     plt.show()
 
 
+# Plot main variables
+def plot_main_variables(data, target, feature):
+    sns.scatterplot(x=data[target], y=data[feature])
+    plt.show()
+
+
 if __name__ == '__main__':
-    training_data = sf.feature_selection(handle_numeric_data(training_data_pre_selection), target_column="arrival_delay_m", k=5)
+    # Apply feature selection
+    training_data = sf.feature_selection(
+        handle_numeric_data(training_data_pre_selection),
+        target_column="arrival_delay_m", k=5
+    )
     training_data["rained"] = training_data_pre_selection["rained"]
     test_data = handle_numeric_data(test_data_pre_selection[training_data.columns])
-
-    """    training_data = handle_numeric_data(training_data)
-    test_data = handle_numeric_data(test_data)
-
-    columns_to_drop_based_on_corr_matrix = ['state',
-                                            'departure_plan_hour', 'departure_plan_datetime']
-
-    training_data = training_data.drop(columns=columns_to_drop_based_on_corr_matrix)
-    test_data = test_data.drop(columns=columns_to_drop_based_on_corr_matrix)"""
 
     print(training_data.columns)
     print(test_data.columns)
 
-    model, history = build_model(training_data, test_data, 'arrival_delay_m', epochs=50, batch_size=64)
-    plot_training_history(history)
-    predictions = model.predict(test_data.drop(columns=['arrival_delay_m']))
+    # Build and train the model
+    model, history = build_model(training_data, test_data, 'arrival_delay_m', epochs=200, batch_size=8)
 
+    # Plot training history
+    plot_training_history(history)
+
+    # Make predictions
+    predictions = model.predict(test_data.drop(columns=['arrival_delay_m']))
     predicted_classes = (predictions > 0.5).astype(int)
+
+    # Plot variables
+    plot_main_variables(training_data, "arrival_delay_m", "departure_delay_m")
