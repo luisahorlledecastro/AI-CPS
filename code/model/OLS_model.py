@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler, LabelEncoder, PolynomialFeatures
 from sklearn.linear_model import RidgeCV, LassoCV, ElasticNetCV
-from sklearn.model_selection import cross_val_score
+# from sklearn.model_selection import cross_val_score
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 from statsmodels.stats.diagnostic import het_breuschpagan
 from statsmodels.stats.stattools import durbin_watson
@@ -72,7 +72,7 @@ class TrainDelayOLS:
             self.regularization_model.fit(X, y)
             coef = self.regularization_model.coef_
             intercept = self.regularization_model.intercept_
-            print(f"{regularization_type.capitalize()} regression coefficients:", coef)
+            print("\n",f"{regularization_type.capitalize()} regression coefficients:", coef)
             print("Intercept:", intercept)
             return {
             'summary': f"{regularization_type.capitalize()} regression coefficients: {coef}\nIntercept: {intercept}",
@@ -114,10 +114,10 @@ class TrainDelayOLS:
 
     def plot_diagnostics(self, X, y):
         '''Plot diagnostic plots for the OLS model.'''
-        plt.figure(figsize=(15, 12))
+        plt.figure(figsize=(15, 7))
 
         # Residuals vs Fitted
-        plt.subplot(221)
+        plt.subplot(131)
         plt.scatter(self.model.fittedvalues, self.model.resid, alpha=0.5, s=10)
         plt.xlabel('Fitted values')
         plt.ylabel('Residuals')
@@ -126,24 +126,17 @@ class TrainDelayOLS:
         sns.regplot(x=self.model.fittedvalues, y=self.model.resid, lowess=True, scatter_kws={'s': 10}, line_kws={'color': 'red', 'lw': 1})
 
         # Q-Q plot
-        plt.subplot(222)
+        plt.subplot(132)
         sm.graphics.qqplot(self.model.resid, line='45', fit=True, ax=plt.gca(), markersize=5)
         plt.title('Q-Q Plot')
 
         # Scale-Location
-        plt.subplot(223)
+        plt.subplot(133)
         plt.scatter(self.model.fittedvalues, np.sqrt(np.abs(self.model.resid)), alpha=0.5, s=10)
         plt.xlabel('Fitted values')
         plt.ylabel('√|Residuals|')
         plt.title('Scale-Location')
         sns.regplot(x=self.model.fittedvalues, y=np.sqrt(np.abs(self.model.resid)), lowess=True, scatter_kws={'s': 10}, line_kws={'color': 'red', 'lw': 1})
-
-        # Residuals vs Leverage
-        plt.subplot(224)
-        ax = plt.gca()
-        sm.graphics.influence_plot(self.model, criterion="cooks", ax=ax, marker='o', markersize=2, alpha=0.75)
-        plt.title('Residuals vs Leverage')
-        plt.grid(True)
 
         plt.tight_layout()
         plt.show()
@@ -161,8 +154,8 @@ class TrainDelayOLS:
 
 def main():
     # Load data
-    train_data = pd.read_csv('C:/Users/dita_/Desktop/AIBAS/teamwork/AI-CPS-1/data/cleaned/training_data.csv')
-    test_data = pd.read_csv('C:/Users/dita_/Desktop/AIBAS/teamwork/AI-CPS-1/data/cleaned/test_data.csv')
+    train_data = pd.read_csv('./data/cleaned/training_data.csv')
+    test_data = pd.read_csv('./data/cleaned/test_data.csv')
 
     # Initialize model
     ols_model = TrainDelayOLS()
