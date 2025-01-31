@@ -64,7 +64,7 @@ def clean_and_preprocess(df, target='arrival_delay_m'):
     df['date'] = df['departure_plan_datetime'].dt.date
     df['hour'] = df['departure_plan_datetime'].dt.hour
     df['day_of_week'] = df['departure_plan_datetime'].dt.day_of_week
-    df['arrival_delay_m'] = round(df['arrival_delay_m'])
+    df['arrival_delay_m'] = (df['arrival_delay_m'])
     
     return df
 

@@ -1,7 +1,7 @@
 import os
 import tensorflow as tf
 from sklearn.preprocessing import StandardScaler, LabelEncoder
-from sklearn.metrics import confusion_matrix, classification_report
+from sklearn.metrics import mean_absolute_error, mean_squared_error
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -9,34 +9,12 @@ import seaborn as sns
 import joblib  # For saving scalers
 import feature_selection as sf
 
-
 # Load data
-training_data_pre_selection = pd.read_csv('../../data/cleaned/training_data.csv')
-test_data_pre_selection = pd.read_csv('../../data/cleaned/test_data.csv')
+TRAINING_DATA_PATH = '../../data/cleaned/training_data.csv'
+TEST_DATA_PATH = '../../data/cleaned/test_data.csv'
 
-# Custom EarlyStopping Callback
-class CustomEarlyStopping(tf.keras.callbacks.Callback):
-    def __init__(self, patience=5):
-        super(CustomEarlyStopping, self).__init__()
-        self.patience = patience
-        self.best_weights = None
-
-    def on_train_begin(self, logs=None):
-        self.best = float('inf')
-        self.wait = 0
-
-    def on_epoch_end(self, epoch, logs=None):
-        current_loss = logs.get("val_loss")
-        if current_loss < self.best:
-            self.best = current_loss
-            self.best_weights = self.model.get_weights()
-            self.wait = 0
-        else:
-            self.wait += 1
-            if self.wait >= self.patience:
-                print(f"\nEarly stopping at epoch {epoch + 1}")
-                self.model.stop_training = True
-                self.model.set_weights(self.best_weights)
+training_data_pre_selection = pd.read_csv(TRAINING_DATA_PATH)
+test_data_pre_selection = pd.read_csv(TEST_DATA_PATH)
 
 # Preprocessing function
 def handle_numeric_data(df):
@@ -46,10 +24,10 @@ def handle_numeric_data(df):
             df[col] = le.fit_transform(df[col].astype(str))
     return df
 
-# Build model function
+# Build regression model function
 def build_model(train, test, target_column, epochs=50, batch_size=64):
     X_train = train.drop(target_column, axis=1)
-    y_train = train[target_column]
+    y_train = train[target_column]  # Keep the actual delay in minutes
 
     X_test = test.drop(target_column, axis=1)
     y_test = test[target_column]
@@ -62,6 +40,7 @@ def build_model(train, test, target_column, epochs=50, batch_size=64):
     # Save scaler
     joblib.dump(scaler, "scaler.pkl")
 
+    # Build Regression Model
     model = tf.keras.Sequential([
         tf.keras.layers.Dense(128, activation='relu', input_shape=(X_train_scaled.shape[1],)),
         tf.keras.layers.BatchNormalization(),
@@ -69,26 +48,25 @@ def build_model(train, test, target_column, epochs=50, batch_size=64):
         tf.keras.layers.Dense(64, activation='relu'),
         tf.keras.layers.BatchNormalization(),
         tf.keras.layers.Dropout(0.1),
-        tf.keras.layers.Dense(1, activation='sigmoid')  # Binary classification
+        tf.keras.layers.Dense(1, activation=None)  # Regression: No activation function
     ])
 
     model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
-                  loss='binary_crossentropy',
-                  metrics=['accuracy'])
+                  loss='mean_squared_error',  # MSE for regression
+                  metrics=['mae', 'mse'])  # Regression metrics
 
-    early_stopping = CustomEarlyStopping(patience=5)
-
+    # Train the model
     history = model.fit(
         X_train_scaled, y_train,
         validation_split=0.2,
         epochs=epochs,
         batch_size=batch_size,
-        callbacks=[early_stopping],
         verbose=1
     )
 
-    test_loss, test_accuracy = model.evaluate(X_test_scaled, y_test, verbose=1)
-    print(f"Test Accuracy: {test_accuracy:.2f}")
+    # Evaluate on test set
+    test_loss, test_mae, test_mse = model.evaluate(X_test_scaled, y_test, verbose=1)
+    print(f"Test MAE: {test_mae:.2f}, Test MSE: {test_mse:.2f}")
 
     return model, history, X_test_scaled, y_test
 
@@ -101,56 +79,51 @@ def save_model(model):
 def save_training_metrics(history):
     metrics_path = "training_metrics.txt"
     with open(metrics_path, "w") as f:
-        f.write(f"Final Training Loss: {history.history['loss'][-1]}\n")
-        f.write(f"Final Validation Loss: {history.history['val_loss'][-1]}\n")
-        f.write(f"Final Training Accuracy: {history.history['accuracy'][-1]}\n")
-        f.write(f"Final Validation Accuracy: {history.history['val_accuracy'][-1]}\n")
+        f.write(f"Final Training MAE: {history.history['mae'][-1]}\n")
+        f.write(f"Final Validation MAE: {history.history['val_mae'][-1]}\n")
+        f.write(f"Final Training MSE: {history.history['mse'][-1]}\n")
+        f.write(f"Final Validation MSE: {history.history['val_mse'][-1]}\n")
 
     print(f"Training metrics saved at {metrics_path}")
 
 # Plot and save training history
 def plot_training_history(history):
     plt.figure()
-    plt.plot(history.history['accuracy'], label='Training Accuracy')
-    plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
+    plt.plot(history.history['mae'], label='Training MAE')
+    plt.plot(history.history['val_mae'], label='Validation MAE')
     plt.xlabel('Epochs')
-    plt.ylabel('Accuracy')
+    plt.ylabel('MAE')
     plt.legend()
-    plt.title('Model Accuracy')
-    plt.savefig("training_accuracy.png")
+    plt.title('Model Mean Absolute Error')
+    plt.savefig("training_mae.png")
+    plt.show()
 
     plt.figure()
-    plt.plot(history.history['loss'], label='Training Loss')
-    plt.plot(history.history['val_loss'], label='Validation Loss')
+    plt.plot(history.history['mse'], label='Training MSE')
+    plt.plot(history.history['val_mse'], label='Validation MSE')
     plt.xlabel('Epochs')
-    plt.ylabel('Loss')
+    plt.ylabel('MSE')
     plt.legend()
-    plt.title('Model Loss')
-    plt.savefig("training_loss.png")
+    plt.title('Model Mean Squared Error')
+    plt.savefig("training_mse.png")
+    plt.show()
 
     print("Training history plots saved.")
 
-# Plot and save confusion matrix
-def plot_confusion_matrix(y_true, y_pred):
-    cm = confusion_matrix(y_true, y_pred)
-    sns.heatmap(cm, annot=True, fmt="d", cmap="Blues")
-    plt.xlabel("Predicted Label")
-    plt.ylabel("True Label")
-    plt.title("Confusion Matrix")
-    plt.savefig("confusion_matrix.png")
-    print("Confusion matrix saved.")
-
-# Scatter plot
-def plot_scatter(y_true, y_pred):
-    plt.figure()
+# Scatter plot for regression predictions
+def plot_regression_results(y_true, y_pred):
+    plt.figure(figsize=(8,6))
     plt.scatter(y_true, y_pred, alpha=0.5)
-    plt.xlabel("True Values")
-    plt.ylabel("Predicted Values")
-    plt.title("Scatter Plot")
-    plt.savefig("scatter_plot.png")
-    print("Scatter plot saved.")
+    plt.xlabel("Actual Delay (minutes)")
+    plt.ylabel("Predicted Delay (minutes)")
+    plt.title("Actual vs. Predicted Delay")
+    plt.plot([min(y_true), max(y_true)], [min(y_true), max(y_true)], color='red', linestyle='dashed')  # Perfect fit line
+    plt.savefig("regression_scatter.png")
+    plt.show()
+    print("Regression scatter plot saved.")
 
 if __name__ == '__main__':
+    # Apply feature selection
     training_data = sf.feature_selection(
         handle_numeric_data(training_data_pre_selection),
         target_column="arrival_delay_m", k=5
@@ -158,19 +131,29 @@ if __name__ == '__main__':
     training_data["rained"] = training_data_pre_selection["rained"]
     test_data = handle_numeric_data(test_data_pre_selection[training_data.columns])
 
-    model, history, X_test_scaled, y_test = build_model(training_data, test_data, 'arrival_delay_m', epochs=200, batch_size=8)
+    model, history, X_test_scaled, y_test = build_model(training_data, test_data, 'arrival_delay_m', epochs=200,
+                                                        batch_size=8)
 
+    # Evaluate on the test set
+    test_loss, test_mae, test_mse = model.evaluate(X_test_scaled, y_test, verbose=1)
+    print(f"\nFinal Test MAE: {test_mae:.2f}")
+    print(f"Final Test MSE: {test_mse:.4f}")
+
+    # Store test performance
+    test_metrics_path = "test_metrics.txt"
+    with open(test_metrics_path, "w") as f:
+        f.write(f"Test MAE: {test_mae:.2f}\n")
+        f.write(f"Test MSE: {test_mse:.4f}\n")
+
+    print(f"Test metrics saved at {test_metrics_path}")
+
+    # Make Predictions on Test Data
+    predictions = model.predict(X_test_scaled)
+
+    # Save Regression Scatter Plot
+    plot_regression_results(y_test, predictions)
+
+    # Save Model & Metrics
     save_model(model)
     save_training_metrics(history)
     plot_training_history(history)
-
-    # Predictions
-    predictions = model.predict(X_test_scaled)
-    predicted_classes = (predictions > 0.5).astype(int)
-
-    # Save additional plots
-    plot_confusion_matrix(y_test, predicted_classes)
-    plot_scatter(y_test, predictions)
-
-    
-#  TODO confusion matrix makes no sense

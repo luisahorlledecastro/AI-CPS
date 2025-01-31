@@ -1,5 +1,6 @@
 # load libraries
 import pandas as pd
+import logging
 
 # import modules
 from clean_train_data import clean_and_preprocess
@@ -29,6 +30,8 @@ def prep_data():
     # split and save files
     split_and_save_data(df, "training_data.csv", "test_data.csv",
                         "activation_data.csv")
+
+    logging.info("Data preparation done. All steps completed.")
 
     return df
 
