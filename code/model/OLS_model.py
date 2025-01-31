@@ -1,210 +1,185 @@
+import os
 import pandas as pd
 import numpy as np
-from sklearn.preprocessing import StandardScaler, LabelEncoder, PolynomialFeatures
-from sklearn.linear_model import RidgeCV, LassoCV, ElasticNetCV
-# from sklearn.model_selection import cross_val_score
-from statsmodels.stats.outliers_influence import variance_inflation_factor
-from statsmodels.stats.diagnostic import het_breuschpagan
-from statsmodels.stats.stattools import durbin_watson
 import statsmodels.api as sm
+import joblib
 import matplotlib.pyplot as plt
 import seaborn as sns
-import pickle
+from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.metrics import mean_absolute_error, mean_squared_error
+import scipy.stats as stats
 
-class TrainDelayOLS:
-    def __init__(self):
-        self.model = None
-        self.scaler = StandardScaler()
-        self.label_encoders = {}
-        self.regularization_model = None
+TRAINING_DATA_PATH = './data/cleaned/training_data.csv'
+TEST_DATA_PATH = './data/cleaned/test_data.csv'
+SAVE_PATH = "./code/model/OLS/"
+TARGET_COLUMN = 'arrival_delay_m'
 
-    def preprocess_data(self, df):
-        '''Preprocess data for regression analysis.'''
-        df_processed = df.copy()
+def create_directory(path):
+    os.makedirs(path, exist_ok=True)
 
-        # Convert categorical variables using label encoding
-        categorical_columns = ['station', 'state', 'city']
-        for col in categorical_columns:
-            if col in df_processed.columns:
-                if col not in self.label_encoders:
-                    self.label_encoders[col] = LabelEncoder()
-                    df_processed[col] = self.label_encoders[col].fit_transform(df_processed[col])
-                else:
-                    df_processed[col] = self.label_encoders[col].transform(df_processed[col])
+def load_data(path):
+    return pd.read_csv(path)
 
-        # Create time-based features
-        df_processed['month'] = pd.to_datetime(df_processed['date']).dt.month
-        df_processed['peak_hour'] = df_processed['departure_plan_hour'].apply(lambda x: 1 if 7 <= x <= 9 or 17 <= x <= 19 else 0)
+def handle_categorical_data(df):
+    for col in df.columns:
+        if df[col].dtype == 'object':
+            le = LabelEncoder()
+            df[col] = le.fit_transform(df[col].astype(str))
+    return df
 
-        # Convert boolean to int
-        df_processed['rained'] = df_processed['rained'].astype(int)
+def preprocess_data(df, target_column):
+    X = df.drop(columns=[target_column])
+    y = df[target_column]
+    return X, y
 
-        # Create interaction terms and polynomial features
-        df_processed['temp_rain_interaction'] = df_processed['temperature'] * df_processed['rained']
-        df_processed['temperature_squared'] = df_processed['temperature'] ** 2
-        df_processed['category_temperature'] = df_processed['category'] * df_processed['temperature']
+def scale_features(X_train, X_test):
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
+    X_test_scaled = scaler.transform(X_test)
+    return X_train_scaled, X_test_scaled, scaler
 
-        # Standardize numerical features to reduce numerical instability
-        numeric_features = ['temperature', 'temperature_squared', 'temp_rain_interaction', 'category_temperature']
-        df_processed[numeric_features] = self.scaler.fit_transform(df_processed[numeric_features])
+def train_ols_model(X, y):
+    '''
+    Trains an Ordinary Least Squares (OLS) regression model.
+    with:
+    X (array-like): Feature matrix
+    y (array-like): Target variable
+    using fitted OLS model
+    '''
+    X = sm.add_constant(X)
+    return sm.OLS(y, X).fit()
 
-        # Select features for the model
-        features = ['temperature', 'rained', 'month', 'departure_plan_hour', 'category', 'day_of_week',
-                    'temp_rain_interaction', 'temperature_squared', 'peak_hour', 'category_temperature']
+def evaluate_model(model, X, y_true):
+    '''
+    Evaluates the performance of the model using various metrics, such as: MAE, MSE, RMSE
+    '''
+    y_pred = model.predict(X)
+    mae = mean_absolute_error(y_true, y_pred)
+    mse = mean_squared_error(y_true, y_pred)
+    rmse = np.sqrt(mse)
+    return mae, mse, rmse, y_pred
 
-        X = df_processed[features]
-        return X, features
+def save_metrics(path, mae, mse, rmse):
+    '''
+    Saves the evaluation metrics to a text file.
+    '''
+    with open(os.path.join(path, "ols_metrics.txt"), "w") as f:
+        f.write(f"Test MAE: {mae:.2f} minutes\n")
+        f.write(f"Test MSE: {mse:.2f} minutes²\n")
+        f.write(f"Test RMSE: {rmse:.2f} minutes\n")
 
-    def fit(self, X, y, use_regularization=False, regularization_type='ridge'):
-        if use_regularization:
-            if regularization_type == 'ridge':
-                alphas = np.logspace(-6, 6, 13)
-                self.regularization_model = RidgeCV(alphas=alphas, cv=5)
-            
+def save_model_summary(path, model):
+    '''
+    '''
+    with open(os.path.join(path, "ols_summary.txt"), "w") as f:
+        f.write(str(model.summary()))
 
-            elif regularization_type == 'lasso':
-                alphas = np.logspace(-6, 6, 13)
-                self.regularization_model = LassoCV(alphas=alphas, cv=5)
-            elif regularization_type == 'elasticnet':
-                alphas = np.logspace(-6, 6, 13)
-                self.regularization_model = ElasticNetCV(alphas=alphas, cv=5)
+def plot_residuals(y_true, y_pred, save_path):
+    '''
+    Creates and saves a histogram plot of the model residuals.
+    where:
+    y_true (array-like): True target values
+    y_pred (array-like): Predicted target values
+    '''
+    plt.figure(figsize=(8, 5))
+    sns.histplot(y_true - y_pred, kde=True)
+    plt.title("Residuals Distribution")
+    plt.xlabel("Residuals")
+    plt.ylabel("Frequency")
+    plt.savefig(os.path.join(save_path, "residuals_distribution.png"))
+    plt.close()
 
-            self.regularization_model.fit(X, y)
-            coef = self.regularization_model.coef_
-            intercept = self.regularization_model.intercept_
-            print("\n",f"{regularization_type.capitalize()} regression coefficients:", coef)
-            print("Intercept:", intercept)
-            return {
-            'summary': f"{regularization_type.capitalize()} regression coefficients: {coef}\nIntercept: {intercept}",
-            'model': self.regularization_model
-            }
-        else:
-            # Add constant for intercept
-            X_const = sm.add_constant(X)
+def plot_regression_scatter(y_true, y_pred, save_path):
+    '''
+    Creates and saves a scatter plot of actual vs predicted values.
+    with arugements:
+    y_true (array-like): True target values
+    y_pred (array-like): Predicted target values
+    '''
+    plt.figure(figsize=(8, 6))
+    plt.scatter(y_true, y_pred, alpha=0.5)
+    plt.xlabel("Actual Delay (minutes)")
+    plt.ylabel("Predicted Delay (minutes)")
+    plt.title("OLS Regression: Actual vs. Predicted Delay")
+    plt.plot([min(y_true), max(y_true)], [min(y_true), max(y_true)], color='red', linestyle='dashed')
+    plt.savefig(os.path.join(save_path, "regression_scatter.png"))
+    plt.close()
+    
+def plot_residuals_vs_fitted(model, X, y_true, save_path):
+    '''
+    Creates and saves a residuals vs. fitted values plot.
+    with arguments:
+    model: Fitted OLS model
+    X-Feature matrix
+    y_true- True target values
+    This plot helps to check for homoscedasticity and linearity assumptions.
+    '''
+    y_pred = model.predict(X)
+    residuals = y_true - y_pred
 
-            # Fit OLS model
-            self.model = sm.OLS(y, X_const).fit()
+    plt.figure(figsize=(8, 6))
+    plt.scatter(y_pred, residuals, alpha=0.5)
+    plt.axhline(y=0, color='r', linestyle='dashed')
+    plt.xlabel("Predicted Delay (minutes)")
+    plt.ylabel("Residuals")
+    plt.title("Residuals vs. Fitted Values")
+    plt.savefig(os.path.join(save_path, "residuals_vs_fitted.png"))
+    plt.close()
 
-            # Calculate VIF
-            vif_data = pd.DataFrame()
-            vif_data["Feature"] = X_const.columns
-            vif_data["VIF"] = [variance_inflation_factor(X_const.values, i) for i in range(X_const.shape[1])]
+def plot_qq(model, X, y_true, save_path):
+    '''
+    Creates and saves a Q-Q(Quantile-Quantile)  plot of the model residuals.
+    Helping to check if the residuals follow a normal distribution
+    where:
+    model: Fitted OLS model
+    X - Feature matrix
+    y_true- true target values
+    '''
+    y_pred = model.predict(X)
+    residuals = y_true - y_pred
 
-            # Perform heteroskedasticity test
-            _, p_value, _, _ = het_breuschpagan(self.model.resid, X_const)
-
-            # Calculate Durbin-Watson statistic
-            dw_statistic = durbin_watson(self.model.resid)
-
-            return {
-                'summary': self.model.summary(),
-                'vif': vif_data,
-                'heteroskedasticity_p_value': p_value,
-                'durbin_watson': dw_statistic
-            }
-
-    def predict(self, X):
-        '''Make predictions using the fitted model.'''
-        X_processed, _ = self.preprocess_data(X)
-        if self.regularization_model:
-            return self.regularization_model.predict(X_processed)
-        else:
-            X_const = sm.add_constant(X_processed)
-            return self.model.predict(X_const)
-
-    def plot_diagnostics(self, X, y):
-        '''Plot diagnostic plots for the OLS model.'''
-        plt.figure(figsize=(15, 7))
-
-        # Residuals vs Fitted
-        plt.subplot(131)
-        plt.scatter(self.model.fittedvalues, self.model.resid, alpha=0.5, s=10)
-        plt.xlabel('Fitted values')
-        plt.ylabel('Residuals')
-        plt.title('Residuals vs Fitted')
-        plt.axhline(y=0, color='r', linestyle='--')
-        sns.regplot(x=self.model.fittedvalues, y=self.model.resid, lowess=True, scatter_kws={'s': 10}, line_kws={'color': 'red', 'lw': 1})
-
-        # Q-Q plot
-        plt.subplot(132)
-        sm.graphics.qqplot(self.model.resid, line='45', fit=True, ax=plt.gca(), markersize=5)
-        plt.title('Q-Q Plot')
-
-        # Scale-Location
-        plt.subplot(133)
-        plt.scatter(self.model.fittedvalues, np.sqrt(np.abs(self.model.resid)), alpha=0.5, s=10)
-        plt.xlabel('Fitted values')
-        plt.ylabel('√|Residuals|')
-        plt.title('Scale-Location')
-        sns.regplot(x=self.model.fittedvalues, y=np.sqrt(np.abs(self.model.resid)), lowess=True, scatter_kws={'s': 10}, line_kws={'color': 'red', 'lw': 1})
-
-        plt.tight_layout()
-        plt.show()
-
-    def save_model(self, filename='ols_model.pkl'):
-        #Save the trained model.
-        model_data = {
-            'model': self.model,
-            'scaler': self.scaler,
-            'label_encoders': self.label_encoders
-        }
-        with open(filename, 'wb') as f:
-            pickle.dump(model_data, f)
+    plt.figure(figsize=(8, 6))
+    stats.probplot(residuals, dist="norm", plot=plt)
+    plt.title("Normal Q-Q plot")
+    plt.savefig(os.path.join(save_path, "qq_plot.png"))
+    plt.close()
 
 
 def main():
-    # Load data
-    train_data = pd.read_csv('./data/cleaned/training_data.csv')
-    test_data = pd.read_csv('./data/cleaned/test_data.csv')
+    create_directory(SAVE_PATH)
 
-    # Initialize model
-    ols_model = TrainDelayOLS()
-    X_train, features = ols_model.preprocess_data(train_data)
-    y_train = train_data['arrival_delay_m']
+    # Load and preprocess data
+    training_data = load_data(TRAINING_DATA_PATH)
+    test_data = load_data(TEST_DATA_PATH)
 
-    # Fit OLS model and get diagnostics
-    ols_diagnostics = ols_model.fit(X_train, y_train, use_regularization=False)
+    training_data = handle_categorical_data(training_data)
+    test_data = handle_categorical_data(test_data)
 
-    print("OLS Model Summary:")
-    print(ols_diagnostics['summary'])
-    print("\nVariance Inflation Factors:")
-    print(ols_diagnostics['vif'])
-    print(f"\nHeteroskedasticity test p-value: {ols_diagnostics['heteroskedasticity_p_value']}")
-    print(f"Durbin-Watson statistic: {ols_diagnostics['durbin_watson']}")
+    X_train, y_train = preprocess_data(training_data, TARGET_COLUMN)
+    X_test, y_test = preprocess_data(test_data, TARGET_COLUMN)
 
-    # Plot OLS diagnostics
-    ols_model.plot_diagnostics(X_train, y_train)
+    # Scale features
+    X_train_scaled, X_test_scaled, scaler = scale_features(X_train, X_test)
+    joblib.dump(scaler, os.path.join(SAVE_PATH, "scaler.pkl"))
 
-    # Fit Ridge regression model
-    ridge_diagnostics = ols_model.fit(X_train, y_train, use_regularization=True, regularization_type='ridge')
+    # Train model
+    ols_model = train_ols_model(X_train_scaled, y_train)
+    joblib.dump(ols_model, os.path.join(SAVE_PATH, "ols_model.pkl"))
 
-    print("\nRidge Regression Results:")
-    print(ridge_diagnostics['summary'])
+    # Evaluate model
+    X_test_scaled = sm.add_constant(X_test_scaled)
+    mae, mse, rmse, y_test_pred = evaluate_model(ols_model, X_test_scaled, y_test)
 
-    # Make predictions and calculate metrics for both models
-    X_test, _ = ols_model.preprocess_data(test_data)
-    y_test = test_data['arrival_delay_m']
+    # Save results
+    save_metrics(SAVE_PATH, mae, mse, rmse)
+    save_model_summary(SAVE_PATH, ols_model)
+    plot_residuals(y_test, y_test_pred, SAVE_PATH)
+    plot_regression_scatter(y_test, y_test_pred, SAVE_PATH)
+    plot_residuals_vs_fitted(ols_model, X_test_scaled, y_test, SAVE_PATH)
+    plot_qq(ols_model, X_test_scaled, y_test, SAVE_PATH)
 
-    ols_predictions = ols_model.predict(test_data)
-    ridge_predictions = ridge_diagnostics['model'].predict(X_test)
+    print(f"Test MAE: {mae:.2f}, \nTest MSE: {mse:.2f}, \nTest RMSE: {rmse:.2f}")
+    print(f"Model and results saved in {SAVE_PATH}")
 
-    for model_name, predictions in [("OLS", ols_predictions), ("Ridge", ridge_predictions)]:
-        mse = np.mean((y_test - predictions) ** 2)
-        r2 = 1 - (np.sum((y_test - predictions) ** 2) / np.sum((y_test - np.mean(y_test)) ** 2))
-        print(f"\n{model_name} Test MSE: {mse}")
-        print(f"{model_name} Test R-squared: {r2}")
-
-    # Save the OLS model
-    ols_model.save_model()
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
-
-
-'''
-reminder results:
-
-OLS Test MSE: 1.0403326032959934
-OLS Test R-squared: 0.05369457075611883
-
-improved from the last commit'''
