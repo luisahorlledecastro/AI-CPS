@@ -1,0 +1,13 @@
+version: '3.9'
+services:
+  learning_base:
+    image: learningbase_appointmentordisappointment
+    volumes:
+      - ai_system:/tmp
+  activation_base:
+    image: activationbase_appointmentordisappointment
+    volumes:
+      - ai_system:/tmp
+volumes:
+  ai_system:
+    driver: local

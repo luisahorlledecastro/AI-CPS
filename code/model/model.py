@@ -70,10 +70,12 @@ def build_model(train, test, target_column, epochs=50, batch_size=64):
 
     return model, history, X_test_scaled, y_test
 
+
 # Save model function
 def save_model(model):
     model.save("currentAiSolution.h5")  # Saved as .h5 format
     print(f"Model saved at currentAiSolution.h5")
+
 
 # Save training metrics
 def save_training_metrics(history):
@@ -85,6 +87,7 @@ def save_training_metrics(history):
         f.write(f"Final Validation MSE: {history.history['val_mse'][-1]}\n")
 
     print(f"Training metrics saved at {metrics_path}")
+
 
 # Plot and save training history
 def plot_training_history(history):
@@ -122,6 +125,7 @@ def plot_regression_results(y_true, y_pred):
     plt.show()
     print("Regression scatter plot saved.")
 
+
 if __name__ == '__main__':
     # Apply feature selection
     training_data = sf.feature_selection(
@@ -131,8 +135,8 @@ if __name__ == '__main__':
     training_data["rained"] = training_data_pre_selection["rained"]
     test_data = handle_numeric_data(test_data_pre_selection[training_data.columns])
 
-    model, history, X_test_scaled, y_test = build_model(training_data, test_data, 'arrival_delay_m', epochs=200,
-                                                        batch_size=8)
+    model, history, X_test_scaled, y_test = build_model(training_data, test_data, 'arrival_delay_m', epochs=50,
+                                                        batch_size=32)
 
     # Evaluate on the test set
     test_loss, test_mae, test_mse = model.evaluate(X_test_scaled, y_test, verbose=1)
