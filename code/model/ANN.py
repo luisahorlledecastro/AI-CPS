@@ -79,7 +79,7 @@ def save_model(model):
 
 # Save training metrics
 def save_training_metrics(history):
-    metrics_path = "training_metrics.txt"
+    metrics_path = "model_metrics/ANN/training_metrics.txt"
     with open(metrics_path, "w") as f:
         f.write(f"Final Training MAE: {history.history['mae'][-1]}\n")
         f.write(f"Final Validation MAE: {history.history['val_mae'][-1]}\n")
@@ -144,7 +144,7 @@ if __name__ == '__main__':
     print(f"Final Test MSE: {test_mse:.4f}")
 
     # Store test performance
-    test_metrics_path = "test_metrics.txt"
+    test_metrics_path = "model_metrics/ANN/test_metrics.txt"
     with open(test_metrics_path, "w") as f:
         f.write(f"Test MAE: {test_mae:.2f}\n")
         f.write(f"Test MSE: {test_mse:.4f}\n")

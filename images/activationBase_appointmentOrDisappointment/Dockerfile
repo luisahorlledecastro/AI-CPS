@@ -1,4 +1,3 @@
-# Dockerfile.activationBase
 FROM busybox
 
 LABEL maintainer="Dita Pelaj <dita_s@live.com> and Luísa Hörlle de Castro <luisa@iservport.com>"

@@ -8,7 +8,7 @@ LABEL license="AGPL-3.0"
 
 RUN mkdir -p /tmp/knowledgeBase
 
-COPY code/model/currentAiSolution.h5 /tmp/knowledgeBase/
+COPY code/model/model_metrics/ANN/currentAiSolution.h5 /tmp/knowledgeBase/
 COPY images/knowledgeBase_appointmentOrDisappointment/README.knowledgeBase.md /tmp/knowledgeBase/
 
 CMD ["sh"]
