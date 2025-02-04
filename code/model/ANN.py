@@ -73,7 +73,7 @@ def build_model(train, test, target_column, epochs=50, batch_size=64):
 
 # Save model function
 def save_model(model):
-    model.save("currentAiSolution.h5")  # Saved as .h5 format
+    model.save("model_metrics/ANN/currentAiSolution.h5")  # Saved as .h5 format
     print(f"Model saved at currentAiSolution.h5")
 
 
@@ -98,7 +98,7 @@ def plot_training_history(history):
     plt.ylabel('MAE')
     plt.legend()
     plt.title('Model Mean Absolute Error')
-    plt.savefig("training_mae.png")
+    plt.savefig("model_metrics/ANN/training_mae.png")
     plt.show()
 
     plt.figure()
@@ -108,7 +108,7 @@ def plot_training_history(history):
     plt.ylabel('MSE')
     plt.legend()
     plt.title('Model Mean Squared Error')
-    plt.savefig("training_mse.png")
+    plt.savefig("model_metrics/ANN/training_mse.png")
     plt.show()
 
     print("Training history plots saved.")
@@ -121,7 +121,7 @@ def plot_regression_results(y_true, y_pred):
     plt.ylabel("Predicted Delay (minutes)")
     plt.title("Actual vs. Predicted Delay")
     plt.plot([min(y_true), max(y_true)], [min(y_true), max(y_true)], color='red', linestyle='dashed')  # Perfect fit line
-    plt.savefig("regression_scatter.png")
+    plt.savefig("model_metrics/ANN/regression_scatter.png")
     plt.show()
     print("Regression scatter plot saved.")
 
