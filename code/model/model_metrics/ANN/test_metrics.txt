@@ -1,2 +1,2 @@
-Test MAE: 0.13
-Test MSE: 0.0466
+Test MAE: 0.12
+Test MSE: 0.0448

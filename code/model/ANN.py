@@ -36,9 +36,6 @@ def build_model(train, test, target_column, epochs=50, batch_size=64):
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
 
-    # Save scaler
-    joblib.dump(scaler, "scaler.pkl")
-
     # Build Regression Model
     model = tf.keras.Sequential([
         tf.keras.layers.Dense(128, activation='relu', input_shape=(X_train_scaled.shape[1],)),
@@ -99,6 +96,7 @@ def plot_training_history(history):
     plt.title('Model Mean Absolute Error')
     plt.savefig("model_metrics/ANN/training_mae.png")
     plt.show()
+    plt.close()
 
     plt.figure()
     plt.plot(history.history['mse'], label='Training MSE')
@@ -109,6 +107,7 @@ def plot_training_history(history):
     plt.title('Model Mean Squared Error')
     plt.savefig("model_metrics/ANN/training_mse.png")
     plt.show()
+    plt.close()
 
     print("Training history plots saved.")
 
@@ -122,6 +121,7 @@ def plot_regression_results(y_true, y_pred):
     plt.plot([min(y_true), max(y_true)], [min(y_true), max(y_true)], color='red', linestyle='dashed')  # Perfect fit line
     plt.savefig("model_metrics/ANN/regression_scatter.png")
     plt.show()
+    plt.close()
     print("Regression scatter plot saved.")
 
 def plot_residuals_ann(y_true, y_pred, save_path):
@@ -138,8 +138,8 @@ def plot_residuals_ann(y_true, y_pred, save_path):
     plt.title("Residuals Distribution")
     plt.xlabel("Residuals")
     plt.ylabel("Frequency")
-    plt.show()
     plt.savefig(os.path.join(save_path, "residuals_distribution.png"))
+    plt.show()
     plt.close()
 
 def plot_regression_scatter_ann(y_true, y_pred, save_path):
@@ -156,8 +156,8 @@ def plot_regression_scatter_ann(y_true, y_pred, save_path):
     plt.ylabel("Predicted Values")
     plt.title("Regression Scatter: Actual vs Predicted")
     plt.plot([min(y_true), max(y_true)], [min(y_true), max(y_true)], color='red', linestyle='dashed')
-    plt.show()
     plt.savefig(os.path.join(save_path, "regression_scatter.png"))
+    plt.show()
     plt.close()
 
 def plot_residuals_vs_fitted_ann(model, X, y_true, save_path):
@@ -178,8 +178,8 @@ def plot_residuals_vs_fitted_ann(model, X, y_true, save_path):
     plt.xlabel("Fitted Values")
     plt.ylabel("Residuals")
     plt.title("Residuals vs Fitted Values")
-    plt.show()
     plt.savefig(os.path.join(save_path, "residuals_vs_fitted.png"))
+    plt.show()
     plt.close()
 
 def plot_qq_ann(model, X, y_true, save_path):
@@ -197,8 +197,8 @@ def plot_qq_ann(model, X, y_true, save_path):
     plt.figure(figsize=(8, 6))
     stats.probplot(residuals, dist="norm", plot=plt)
     plt.title("Normal Q-Q Plot")
-    plt.show()
     plt.savefig(os.path.join(save_path, "qq_plot.png"))
+    plt.show()
     plt.close()
 
 
@@ -241,6 +241,10 @@ if __name__ == '__main__':
     plot_training_history(history)
 
     y_pred = model.predict(X_test_scaled).flatten()
+
+    y2_pred = model.predict(activation_data).flatten()
+    print(y2_pred)
+    print(activation_data)
 
     save_path = "model_metrics/ANN/"
 
