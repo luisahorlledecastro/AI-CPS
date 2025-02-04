@@ -1,5 +1,6 @@
 """
-data from Kaggle too big. provide link TODO
+data from Kaggle too big, so we used local path to load the data
+data can be found in: https://drive.google.com/drive/folders/1j-b6GL-Ng2o3Ge0tsPiIoIOGq100NpsQ
 """
 
 # import libraries
@@ -9,7 +10,8 @@ import os
 
 def add_states(save=False):
     # load data
-    data = pd.read_csv("/Users/luisahorlledecastro/Downloads/DBtrainrides.csv").drop(
+    # TODO: Download the data from the link provided above and store it in the data folder
+    data = pd.read_csv("./data/scraped/DBtrainrides.csv").drop(
         columns=['ID', 'line', 'path', 'eva_nr', 'category',
                  'zip', 'long', 'lat', 'arrival_plan', 'departure_plan','arrival_change',
                  'departure_change', 'arrival_delay_m', 'departure_delay_m', 'info',
