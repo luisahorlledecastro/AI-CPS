@@ -38,7 +38,7 @@ def build_model(train, test, target_column, epochs=50, batch_size=64):
     X_test_scaled = scaler.transform(X_test)
 
     # Save scaler
-    joblib.dump(scaler, "scaler.pkl")
+    joblib.dump(scaler, "model_metrics/ANN/scaler.pkl")
 
     # Build Regression Model
     model = tf.keras.Sequential([
@@ -99,7 +99,7 @@ def plot_training_history(history):
     plt.legend()
     plt.title('Model Mean Absolute Error')
     plt.savefig("model_metrics/ANN/training_mae.png")
-    plt.show()
+    # plt.show()
 
     plt.figure()
     plt.plot(history.history['mse'], label='Training MSE')
@@ -109,7 +109,7 @@ def plot_training_history(history):
     plt.legend()
     plt.title('Model Mean Squared Error')
     plt.savefig("model_metrics/ANN/training_mse.png")
-    plt.show()
+    # plt.show()
 
     print("Training history plots saved.")
 
@@ -122,7 +122,7 @@ def plot_regression_results(y_true, y_pred):
     plt.title("Actual vs. Predicted Delay")
     plt.plot([min(y_true), max(y_true)], [min(y_true), max(y_true)], color='red', linestyle='dashed')  # Perfect fit line
     plt.savefig("model_metrics/ANN/regression_scatter.png")
-    plt.show()
+    # plt.show()
     print("Regression scatter plot saved.")
 
 
