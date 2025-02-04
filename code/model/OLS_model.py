@@ -9,8 +9,9 @@ from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 import scipy.stats as stats
 
-
-SAVE_PATH = "model_metrics/OLS/"
+TRAINING_DATA_PATH = '../../data/cleaned/training_data.csv'
+TEST_DATA_PATH = '../../data/cleaned/test_data.csv'
+SAVE_PATH = "./code/model/OLS/"
 TARGET_COLUMN = 'arrival_delay_m'
 
 def create_directory(path):
@@ -148,8 +149,8 @@ def main():
     create_directory(SAVE_PATH)
 
     # Load and preprocess data
-    training_data = load_data("../../data/cleaned/training_data.csv")
-    test_data = load_data("../../data/cleaned/test_data.csv")
+    training_data = load_data(TRAINING_DATA_PATH)
+    test_data = load_data(TEST_DATA_PATH)
 
     training_data = handle_categorical_data(training_data)
     test_data = handle_categorical_data(test_data)

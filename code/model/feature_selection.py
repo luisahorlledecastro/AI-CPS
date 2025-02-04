@@ -43,8 +43,6 @@ def engineer_columns(df):
     # Preview the result
     print(data)
 
-    # TODO deu alguma coisa errada aqui, ta rounding umas coisas the nao deveriam ser rounded
-
     return df
 
 
@@ -99,10 +97,3 @@ if __name__ == '__main__':
     print(df.head())
     selected_data_univariate = feature_selection(df, target_column="arrival_delay_m", k=5)
     plot_correlation_matrix(df)
-
-
-
-
-"""
-target highly correlated with departure_delay_m, date
-"""

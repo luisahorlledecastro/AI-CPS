@@ -1,17 +1,16 @@
 import os
 import tensorflow as tf
 from sklearn.preprocessing import StandardScaler, LabelEncoder
-from sklearn.metrics import mean_absolute_error, mean_squared_error
-import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-import joblib  # For saving scalers
 import feature_selection as sf
+import scipy.stats as stats
 
 # Load data
 TRAINING_DATA_PATH = '../../data/cleaned/training_data.csv'
 TEST_DATA_PATH = '../../data/cleaned/test_data.csv'
+ACTIVATION_DATA_PATH = '../../data/cleaned/activation_data.csv'
 
 training_data_pre_selection = pd.read_csv(TRAINING_DATA_PATH)
 test_data_pre_selection = pd.read_csv(TEST_DATA_PATH)
@@ -38,7 +37,7 @@ def build_model(train, test, target_column, epochs=50, batch_size=64):
     X_test_scaled = scaler.transform(X_test)
 
     # Save scaler
-    joblib.dump(scaler, "model_metrics/ANN/scaler.pkl")
+    joblib.dump(scaler, "scaler.pkl")
 
     # Build Regression Model
     model = tf.keras.Sequential([
@@ -48,7 +47,7 @@ def build_model(train, test, target_column, epochs=50, batch_size=64):
         tf.keras.layers.Dense(64, activation='relu'),
         tf.keras.layers.BatchNormalization(),
         tf.keras.layers.Dropout(0.1),
-        tf.keras.layers.Dense(1, activation=None)  # Regression: No activation function
+        tf.keras.layers.Dense(1, activation=None)
     ])
 
     model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
@@ -99,7 +98,7 @@ def plot_training_history(history):
     plt.legend()
     plt.title('Model Mean Absolute Error')
     plt.savefig("model_metrics/ANN/training_mae.png")
-    # plt.show()
+    plt.show()
 
     plt.figure()
     plt.plot(history.history['mse'], label='Training MSE')
@@ -109,7 +108,7 @@ def plot_training_history(history):
     plt.legend()
     plt.title('Model Mean Squared Error')
     plt.savefig("model_metrics/ANN/training_mse.png")
-    # plt.show()
+    plt.show()
 
     print("Training history plots saved.")
 
@@ -122,8 +121,85 @@ def plot_regression_results(y_true, y_pred):
     plt.title("Actual vs. Predicted Delay")
     plt.plot([min(y_true), max(y_true)], [min(y_true), max(y_true)], color='red', linestyle='dashed')  # Perfect fit line
     plt.savefig("model_metrics/ANN/regression_scatter.png")
-    # plt.show()
+    plt.show()
     print("Regression scatter plot saved.")
+
+def plot_residuals_ann(y_true, y_pred, save_path):
+    '''
+    Creates and saves a histogram plot of the model residuals.
+    Args:
+    y_true (array-like): True target values
+    y_pred (array-like): Predicted target values
+    save_path (str): Path to save the plot
+    '''
+    residuals = y_true - y_pred
+    plt.figure(figsize=(8, 5))
+    sns.histplot(residuals, kde=True, bins=30)
+    plt.title("Residuals Distribution")
+    plt.xlabel("Residuals")
+    plt.ylabel("Frequency")
+    plt.show()
+    plt.savefig(os.path.join(save_path, "residuals_distribution.png"))
+    plt.close()
+
+def plot_regression_scatter_ann(y_true, y_pred, save_path):
+    '''
+    Creates and saves a scatter plot of actual vs predicted values.
+    Args:
+    y_true (array-like): True target values
+    y_pred (array-like): Predicted target values
+    save_path (str): Path to save the plot
+    '''
+    plt.figure(figsize=(8, 6))
+    plt.scatter(y_true, y_pred, alpha=0.5)
+    plt.xlabel("Actual Values")
+    plt.ylabel("Predicted Values")
+    plt.title("Regression Scatter: Actual vs Predicted")
+    plt.plot([min(y_true), max(y_true)], [min(y_true), max(y_true)], color='red', linestyle='dashed')
+    plt.show()
+    plt.savefig(os.path.join(save_path, "regression_scatter.png"))
+    plt.close()
+
+def plot_residuals_vs_fitted_ann(model, X, y_true, save_path):
+    '''
+    Creates and saves a residuals vs fitted values plot for an ANN model.
+    Args:
+    model: Trained ANN model
+    X: Feature matrix (scaled as per the training process)
+    y_true (array-like): True target values
+    save_path (str): Path to save the plot
+    '''
+    y_pred = model.predict(X).flatten()
+    residuals = y_true - y_pred
+
+    plt.figure(figsize=(8, 6))
+    plt.scatter(y_pred, residuals, alpha=0.5)
+    plt.axhline(y=0, color='r', linestyle='dashed')
+    plt.xlabel("Fitted Values")
+    plt.ylabel("Residuals")
+    plt.title("Residuals vs Fitted Values")
+    plt.show()
+    plt.savefig(os.path.join(save_path, "residuals_vs_fitted.png"))
+    plt.close()
+
+def plot_qq_ann(model, X, y_true, save_path):
+    '''
+    Creates and saves a Q-Q plot of the model residuals for an ANN model.
+    Args:
+    model: Trained ANN model
+    X: Feature matrix (scaled as per the training process)
+    y_true (array-like): True target values
+    save_path (str): Path to save the plot
+    '''
+    y_pred = model.predict(X).flatten()
+    residuals = y_true - y_pred
+
+    plt.figure(figsize=(8, 6))
+    stats.probplot(residuals, dist="norm", plot=plt)
+    plt.title("Normal Q-Q Plot")
+    plt.show()
+    plt.savefig(os.path.join(save_path, "qq_plot.png"))
+    plt.close()
 
 
 if __name__ == '__main__':
@@ -134,6 +210,8 @@ if __name__ == '__main__':
     )
     training_data["rained"] = training_data_pre_selection["rained"]
     test_data = handle_numeric_data(test_data_pre_selection[training_data.columns])
+    activation_data = handle_numeric_data(test_data[training_data.columns])
+
 
     model, history, X_test_scaled, y_test = build_model(training_data, test_data, 'arrival_delay_m', epochs=50,
                                                         batch_size=32)
@@ -161,3 +239,12 @@ if __name__ == '__main__':
     save_model(model)
     save_training_metrics(history)
     plot_training_history(history)
+
+    y_pred = model.predict(X_test_scaled).flatten()
+
+    save_path = "model_metrics/ANN/"
+
+    plot_residuals_ann(y_test, y_pred, save_path)
+    plot_regression_scatter_ann(y_test, y_pred, save_path)
+    plot_residuals_vs_fitted_ann(model, X_test_scaled, y_test, save_path)
+    plot_qq_ann(model, X_test_scaled, y_test, save_path)

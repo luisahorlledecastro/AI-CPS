@@ -14,5 +14,9 @@ This project was collaboratively developed by:
 
 ---
 
+## Data Sources
+- https://www.kaggle.com/datasets/nokkyu/deutsche-bahn-db-delays/data/?select=DBtrainrides.csv
+- 
+
 ## License
 This project is licensed under the AGPL-3.0 License as required by the course.
