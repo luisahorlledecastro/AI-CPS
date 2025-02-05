@@ -3,6 +3,8 @@ FROM tensorflow/tensorflow:latest-gpu
 LABEL maintainer="Dita Pelaj and Luísa Hörlle de Castro"
 LABEL description="Code Base for AI Project 'Appointment or Disappointment'"
 
+RUN pip3 install --no-cache-dir pandas scikit-learn joblib
+
 RUN mkdir -p /tmp/codeBase
 
 # ✅ Copy the required files into the container

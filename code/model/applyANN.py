@@ -1,7 +1,7 @@
 import json
 import tensorflow as tf
 import pandas as pd
-from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.preprocessing import LabelEncoder
 import joblib
 
 # Paths
