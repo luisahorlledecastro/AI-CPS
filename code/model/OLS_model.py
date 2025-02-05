@@ -11,7 +11,7 @@ import scipy.stats as stats
 
 TRAINING_DATA_PATH = '../../data/cleaned/training_data.csv'
 TEST_DATA_PATH = '../../data/cleaned/test_data.csv'
-SAVE_PATH = "./code/model/OLS/"
+SAVE_PATH = "model_metrics/OLS/"
 TARGET_COLUMN = 'arrival_delay_m'
 
 def create_directory(path):

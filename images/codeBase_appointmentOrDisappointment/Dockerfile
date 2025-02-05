@@ -1,19 +1,20 @@
-FROM python:3.9-alpine
+FROM tensorflow/tensorflow:latest-gpu
 
 LABEL maintainer="Dita Pelaj and Luísa Hörlle de Castro"
 LABEL description="Code Base for AI Project 'Appointment or Disappointment'"
-LABEL course="M. Grum: Advanced AI-based Application Systems"
-LABEL ownership="Dita Pelaj and Luísa Hörlle de Castro"
-LABEL license="AGPL-3.0"
 
-RUN pip3 install matplotlib scipy pandas numpy statsmodels seaborn scikit-learn joblib tensorflow
+RUN pip3 install --no-cache-dir pandas scikit-learn joblib statsmodels matplotlib seaborn 
 
 RUN mkdir -p /tmp/codeBase
 
-COPY images/codeBase_appointmentOrDisappointment/README.codeBase.md /tmp/codeBase/
-COPY code/model/applyANN.py /tmp/codeBase
-COPY code/model/applyOLS.py /tmp/codeBase
+COPY applyANN.py /tmp/codeBase/
+COPY applyOLS.py /tmp/codeBase/
+COPY README.codeBase.md /tmp/codeBase/
+# COPY ../code/model/model_metrics /tmp/codeBase/model_metrics/
 
-COPY scenarios /codeBase/scenarios/
 
-CMD ["sh"]
+
+# Set the default command to run the script
+CMD ["sh", "-c", "ls -lah /tmp/codeBase"]
+
+

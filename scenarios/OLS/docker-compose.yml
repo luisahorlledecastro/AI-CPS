@@ -1,4 +1,4 @@
-version: "3.9"
+# version: "3.9"
 
 services:
   knowledge_base:
@@ -16,13 +16,20 @@ services:
   code_base:
     image: docker.io/hoerllel/tmp:codebase_appointmentordisappointment
     volumes:
-      - ai_system:/tmp/knowledgeBase
+      - ai_system_knowledge:/tmp/knowledgeBase
       - ai_system_code:/tmp/codeBase
     depends_on:
       - knowledge_base
       - activation_base
-    entrypoint: ["sh", "-c", "ls -R /tmp/codeBase && python3 /tmp/codeBase/applyOLS.py"]
+    entrypoint: ["sh", "-c", "ls -R /tmp/codeBase"]
+    command: 
+    - /tmp/codeBase
+    - python3 applyOLS.py
 
 volumes:
-  ai_system:
+  ai_system_knowledge:
+    driver: local
+  ai_system_activation:
+    driver: local
+  ai_system_code:
     driver: local
