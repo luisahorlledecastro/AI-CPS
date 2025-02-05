@@ -5,7 +5,7 @@ from sklearn.preprocessing import StandardScaler, LabelEncoder
 import joblib
 
 # Paths
-MODEL_PATH = "model_metrics/ANN/currentAiSolution.keras"  # Use `.keras` instead of `.h5`
+MODEL_PATH = "model_metrics/ANN/currentAiSolution.keras"
 FEATURE_METADATA_PATH = "model_metrics/ANN/feature_columns.json"
 ACTIVATION_DATA_PATH = "../../data/cleaned/activation_data.csv"
 
