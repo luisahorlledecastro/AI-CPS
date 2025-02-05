@@ -1,19 +1,23 @@
-FROM python:3.9-alpine
+FROM tensorflow/tensorflow:latest-gpu
 
 LABEL maintainer="Dita Pelaj and Luísa Hörlle de Castro"
 LABEL description="Code Base for AI Project 'Appointment or Disappointment'"
-LABEL course="M. Grum: Advanced AI-based Application Systems"
-LABEL ownership="Dita Pelaj and Luísa Hörlle de Castro"
-LABEL license="AGPL-3.0"
 
-RUN pip3 install matplotlib scipy pandas numpy statsmodels seaborn scikit-learn joblib tensorflow
-
+# Create necessary directories
 RUN mkdir -p /tmp/codeBase
 
+# Copy the ANN-related files and other scripts
+COPY code/model/applyANN.py /tmp/codeBase/
+COPY code/model/model_metrics /tmp/codeBase/model_metrics/
+COPY code/model/feature_selection.py /tmp/codeBase/
+COPY code/model/applyOLS.py /tmp/codeBase/
+
+# Copy additional documentation
 COPY images/codeBase_appointmentOrDisappointment/README.codeBase.md /tmp/codeBase/
-COPY code/model/applyANN.py /tmp/codeBase
-COPY code/model/applyOLS.py /tmp/codeBase
 
-COPY scenarios /codeBase/scenarios/
+WORKDIR /tmp/codeBase
 
+# Default command to execute the ANN script
 CMD ["sh"]
+
+# build from root
