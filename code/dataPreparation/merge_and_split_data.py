@@ -113,17 +113,17 @@ def split_and_save_data(df, train_data_file, test_data_file, activation_file):
 
         # Save training data to CSV
         train_path = os.path.join(save_directory, train_data_file)
-        train_df.to_csv(train_path, index=False)
+        train_df.to_csv(train_path, index=False, float_format='%.6f')
         print(f"Training data saved to {train_path}")
 
         # Save test data to CSV
         test_path = os.path.join(save_directory, test_data_file)
-        test_df.to_csv(test_path, index=False)
+        test_df.to_csv(test_path, index=False, float_format='%.6f')
         print(f"Test data saved to {test_path}")
 
         # Save one entry from the test data to a separate CSV
         single_entry_path = os.path.join(save_directory, activation_file)
-        test_df.iloc[:1].to_csv(single_entry_path, index=False)
+        test_df.iloc[1:2].to_csv(single_entry_path, index=False, float_format='%.6f')
         print(f"Single test entry saved to {single_entry_path}")
 
     except Exception as e:

@@ -1,3 +1,3 @@
 Test MAE: 0.18 minutes
-Test MSE: 0.08 minutes²
+Test MSE: 0.08 minutes
 Test RMSE: 0.28 minutes

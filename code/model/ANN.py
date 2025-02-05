@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import feature_selection as sf
 import scipy.stats as stats
+import json
+import joblib
 
 # Load data
 TRAINING_DATA_PATH = '../../data/cleaned/training_data.csv'
@@ -15,6 +17,7 @@ ACTIVATION_DATA_PATH = '../../data/cleaned/activation_data.csv'
 training_data_pre_selection = pd.read_csv(TRAINING_DATA_PATH)
 test_data_pre_selection = pd.read_csv(TEST_DATA_PATH)
 
+
 # Preprocessing function
 def handle_numeric_data(df):
     for col in df.columns:
@@ -23,10 +26,21 @@ def handle_numeric_data(df):
             df[col] = le.fit_transform(df[col].astype(str))
     return df
 
+
 # Build regression model function
 def build_model(train, test, target_column, epochs=50, batch_size=64):
-    X_train = train.drop(target_column, axis=1)
-    y_train = train[target_column]  # Keep the actual delay in minutes
+    # Apply feature selection
+    train_selected = sf.feature_selection(
+        handle_numeric_data(train),
+        target_column="arrival_delay_m", k=5
+    )
+    train_selected["rained"] = training_data_pre_selection["rained"]
+    test = handle_numeric_data(test[train_selected.columns])
+
+    X_train = train_selected.drop(target_column, axis=1)
+    y_train = train_selected[target_column]  # Keep the actual delay in minutes
+
+    feature_columns = list(X_train.columns)
 
     X_test = test.drop(target_column, axis=1)
     y_test = test[target_column]
@@ -35,6 +49,10 @@ def build_model(train, test, target_column, epochs=50, batch_size=64):
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
+
+    # Save the scaler for later use
+    joblib.dump(scaler, "model_metrics/ANN/scaler.pkl")
+    print("Scaler saved at model_metrics/ANN/scaler.pkl")
 
     # Build Regression Model
     model = tf.keras.Sequential([
@@ -64,13 +82,21 @@ def build_model(train, test, target_column, epochs=50, batch_size=64):
     test_loss, test_mae, test_mse = model.evaluate(X_test_scaled, y_test, verbose=1)
     print(f"Test MAE: {test_mae:.2f}, Test MSE: {test_mse:.2f}")
 
-    return model, history, X_test_scaled, y_test
+    return model, history, X_test_scaled, y_test, feature_columns
 
 
 # Save model function
-def save_model(model):
-    model.save("model_metrics/ANN/currentAiSolution.h5")  # Saved as .h5 format
-    print(f"Model saved at currentAiSolution.h5")
+def save_model(model, feature_columns):
+    # Save the model in `.keras` format
+    model.save("model_metrics/ANN/currentAiSolution.keras")
+    print(f"Model saved at currentAiSolution.keras")
+
+    # Save feature column names
+    feature_metadata_path = "model_metrics/ANN/feature_columns.json"
+    with open(feature_metadata_path, "w") as f:
+        json.dump(feature_columns, f)
+
+    print(f"Feature columns saved at {feature_metadata_path}")
 
 
 # Save training metrics
@@ -111,6 +137,7 @@ def plot_training_history(history):
 
     print("Training history plots saved.")
 
+
 # Scatter plot for regression predictions
 def plot_regression_results(y_true, y_pred):
     plt.figure(figsize=(8,6))
@@ -123,6 +150,7 @@ def plot_regression_results(y_true, y_pred):
     plt.show()
     plt.close()
     print("Regression scatter plot saved.")
+
 
 def plot_residuals_ann(y_true, y_pred, save_path):
     '''
@@ -142,6 +170,7 @@ def plot_residuals_ann(y_true, y_pred, save_path):
     plt.show()
     plt.close()
 
+
 def plot_regression_scatter_ann(y_true, y_pred, save_path):
     '''
     Creates and saves a scatter plot of actual vs predicted values.
@@ -159,6 +188,7 @@ def plot_regression_scatter_ann(y_true, y_pred, save_path):
     plt.savefig(os.path.join(save_path, "regression_scatter.png"))
     plt.show()
     plt.close()
+
 
 def plot_residuals_vs_fitted_ann(model, X, y_true, save_path):
     '''
@@ -182,6 +212,7 @@ def plot_residuals_vs_fitted_ann(model, X, y_true, save_path):
     plt.show()
     plt.close()
 
+
 def plot_qq_ann(model, X, y_true, save_path):
     '''
     Creates and saves a Q-Q plot of the model residuals for an ANN model.
@@ -203,17 +234,7 @@ def plot_qq_ann(model, X, y_true, save_path):
 
 
 if __name__ == '__main__':
-    # Apply feature selection
-    training_data = sf.feature_selection(
-        handle_numeric_data(training_data_pre_selection),
-        target_column="arrival_delay_m", k=5
-    )
-    training_data["rained"] = training_data_pre_selection["rained"]
-    test_data = handle_numeric_data(test_data_pre_selection[training_data.columns])
-    activation_data = handle_numeric_data(test_data[training_data.columns])
-
-
-    model, history, X_test_scaled, y_test = build_model(training_data, test_data, 'arrival_delay_m', epochs=50,
+    model, history, X_test_scaled, y_test, feature_columns = build_model(training_data_pre_selection, test_data_pre_selection, 'arrival_delay_m', epochs=50,
                                                         batch_size=32)
 
     # Evaluate on the test set
@@ -236,15 +257,11 @@ if __name__ == '__main__':
     plot_regression_results(y_test, predictions)
 
     # Save Model & Metrics
-    save_model(model)
+    save_model(model, feature_columns)
     save_training_metrics(history)
     plot_training_history(history)
 
     y_pred = model.predict(X_test_scaled).flatten()
-
-    y2_pred = model.predict(activation_data).flatten()
-    print(y2_pred)
-    print(activation_data)
 
     save_path = "model_metrics/ANN/"
 
