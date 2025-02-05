@@ -16,6 +16,7 @@ services:
   code_base:
     image: docker.io/hoerllel/tmp:codebase_appointmentordisappointment
     volumes:
+      - ai_system:/tmp/knowledgeBase
       - ai_system_code:/tmp/codeBase
     depends_on:
       - knowledge_base
