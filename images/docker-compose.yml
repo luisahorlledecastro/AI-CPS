@@ -4,33 +4,27 @@ services:
   learning_base:
     image: docker.io/hoerllel/tmp:learningbase_appointmentordisappointment
     volumes:
-      - ai_system_learning:/tmp/learningBase
+      - ai_system:/tmp/learningBase
     entrypoint: ["sh", "-c", "ls -R /tmp/learningBase"]
 
   activation_base:
     image: docker.io/hoerllel/tmp:activationbase_appointmentordisappointment
     volumes:
-      - ai_system_activation:/tmp/activationBase
+      - ai_system:/tmp/activationBase
     entrypoint: ["sh", "-c", "ls -R /tmp/activationBase"]
 
   knowledge_base:
     image: docker.io/hoerllel/tmp:knowledgebase_appointmentordisappointment
     volumes:
-      - ai_system_knowledge:/tmp/knowledgeBase
+      - ai_system:/tmp/knowledgeBase
     entrypoint: ["sh", "-c", "ls -R /tmp/knowledgeBase"]
 
   code_base:
     image: docker.io/hoerllel/tmp:codebase_appointmentordisappointment
     volumes:
-      - ai_system_code:/tmp/activationBase
+      - ai_system:/tmp/activationBase
     entrypoint: ["sh", "-c", "ls -R /tmp/activationBase"]
 
 volumes:
-  ai_system_learning:
-    driver: local
-  ai_system_activation:
-    driver: local
-  ai_system_knowledge:
-    driver: local
-  ai_system_code:
+  ai_system:
     driver: local

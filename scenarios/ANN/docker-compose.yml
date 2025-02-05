@@ -20,7 +20,7 @@ services:
     depends_on:
       - knowledge_base
       - activation_base
-    entrypoint: ["sh", "-c", "ls -R /tmp/codeBase && python3 /tmp/codeBase/scenarios/applyANN.py"]
+    entrypoint: ["sh", "-c", "ls -R /tmp/codeBase && python3 /tmp/codeBase/applyANN.py"]
 
 volumes:
   ai_system:
