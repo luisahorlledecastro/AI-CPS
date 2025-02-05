@@ -4,37 +4,28 @@ services:
   knowledge_base:
     image: docker.io/hoerllel/tmp:knowledgebase_appointmentordisappointment
     volumes:
-       - ai_system:/tmp
-    command:
-      - sh
-      - "-c"
-      - |
-        rm -rf /tmp/knowledgeBase/ && mkdir -p /tmp/knowledgeBase/ && cp -r /tmp/knowledgeBase/ /tmp/;
+      - ai_system_knowledge:/tmp/knowledgeBase
+    entrypoint: ["sh", "-c", "ls -R /tmp/knowledgeBase"]
 
   activation_base:
     image: docker.io/hoerllel/tmp:activationbase_appointmentordisappointment
     volumes:
-       - ai_system:/tmp
-    command:
-      - sh
-      - "-c"
-      - |
-        rm -rf /tmp/activationBase/ && mkdir -p /tmp/activationBase/ && cp -r /tmp/activationBase/ /tmp/;
+      - ai_system_activation:/tmp/activationBase
+    entrypoint: ["sh", "-c", "ls -R /tmp/activationBase"]
 
   code_base:
     image: docker.io/hoerllel/tmp:codebase_appointmentordisappointment
     volumes:
-       - ai_system:/tmp
+      - ai_system_code:/tmp/codeBase
     depends_on:
-      - "knowledge_base"
-      - "activation_base"
-    command:
-      - sh
-      - "-c"
-      - |
-        rm -rf /tmp/codeBase/ && mkdir -p /tmp/codeBase/ && cp -r /tmp/activationBase/ /tmp/codeBase/;
-        python3 /tmp/codeBase/applyOLS.py;
+      - knowledge_base
+      - activation_base
+    entrypoint: ["sh", "-c", "ls -R /tmp/codeBase && cd /tmp/codeBase && python3 applyOLS.py"]
 
 volumes:
-  ai_system:
-    external: true
+  ai_system_knowledge:
+    driver: local
+  ai_system_activation:
+    driver: local
+  ai_system_code:
+    driver: local
