@@ -4,21 +4,21 @@ LABEL maintainer="Dita Pelaj <dita_s@live.com> and Luísa Hörlle de Castro <lui
 LABEL description="Learning Base for AI Project 'Appointment or Disappointment'"
 LABEL course="Advanced AI-based Application Systems"
 
-RUN mkdir -p /tmp/learningBase/train /tmp/learningBase/validation
+RUN mkdir -p /learningBase/train /learningBase/validation
 
-COPY data/cleaned/training_data.csv /tmp/learningBase/train/
-COPY data/cleaned/test_data.csv /tmp/learningBase/validation/
+COPY training_data.csv /learningBase/train/
+COPY test_data.csv /learningBase/validation/
 
-COPY code/model/model_metrics/ANN/regression_scatter.png /tmp/learningBase/validation
-COPY code/model/model_metrics/ANN/test_metrics.txt /tmp/learningBase/validation
+COPY regression_scatter.png /learningBase/validation
+COPY test_metrics.txt /learningBase/validation
 
-COPY code/model/model_metrics/ANN/training_mae.png /tmp/learningBase/train
-COPY code/model/model_metrics/ANN/training_mse.png /tmp/learningBase/train
-COPY code/model/model_metrics/ANN/training_metrics.txt /tmp/learningBase/train
+COPY training_mae.png /learningBase/train
+COPY training_mse.png /learningBase/train
+COPY training_metrics.txt /learningBase/train
 
-COPY images/learningBase_appointmentOrDisappointment/README.learningBase.md /tmp/learningBase/
+COPY README.learningBase.md /learningBase/
 
-CMD ["sh"]
+# CMD ["sh"]
 
 
 # note: image must be built two levels up at ../../

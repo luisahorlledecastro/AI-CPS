@@ -1,0 +1,2 @@
+station,departure_plan_datetime,category,long,lat,arrival_delay_m,departure_delay_m,departure_plan_hour,date,hour,day_of_week,state,city,temperature,rained
+Waidmannslust,2024-06-25 12:00:00,4.000000,13.320996,52.606480,0.473684,0.157895,12.000000,2024-06-25,12,1,Berlin,Berlin,26.700000,False

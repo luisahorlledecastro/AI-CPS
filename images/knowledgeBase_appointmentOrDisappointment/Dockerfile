@@ -6,10 +6,12 @@ LABEL course="M. Grum: Advanced AI-based Application Systems"
 LABEL ownership="Dita Pelaj and Luísa Hörlle de Castro"
 LABEL license="AGPL-3.0"
 
-RUN mkdir -p /tmp/knowledgeBase
+RUN mkdir -p /knowledgeBase
 
-COPY code/model/model_metrics/ANN/currentAiSolution.keras /tmp/knowledgeBase/
-COPY code/model/model_metrics/OLS/ols_model.pkl /tmp/knowledgeBase
-COPY images/knowledgeBase_appointmentOrDisappointment/README.knowledgeBase.md /tmp/knowledgeBase/
+COPY currentAiSolution.keras /knowledgeBase/
+COPY ols_model.pkl /knowledgeBase
+COPY scaler.pkl /knowledgeBase
+COPY README.knowledgeBase.md /knowledgeBase/
 
-CMD ["sh"]
+
+# CMD ["sh"]

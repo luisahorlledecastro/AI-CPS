@@ -1,28 +1,45 @@
-version: "3.9"
+# version: "3.9"
 
 services:
   knowledge_base:
     image: docker.io/hoerllel/tmp:knowledgebase_appointmentordisappointment
     volumes:
-      - ai_system:/tmp/knowledgeBase
-    entrypoint: ["sh", "-c", "ls -R /tmp/knowledgeBase"]
+      - ai_system:/tmp
+    # entrypoint: ["sh", "-c", "ls -R /tmp/knowledgeBase"]
+    command:
+      - /bin/sh
+      - "-c"
+      - |
+        rm -rf /tmp/knowledgeBase/ && cp -r /knowledgeBase/ /tmp/;
 
   activation_base:
     image: docker.io/hoerllel/tmp:activationbase_appointmentordisappointment
     volumes:
-      - ai_system:/tmp/activationBase
-    entrypoint: ["sh", "-c", "ls -R /tmp/activationBase"]
+      - ai_system:/tmp
+    # entrypoint: ["sh", "-c", "ls -R /tmp/activationBase"]
+    command:
+      - /bin/sh
+      - "-c"
+      - |
+        rm -rf /tmp/activationBase/ && cp -r /activationBase/ /tmp/;
 
   code_base:
     image: docker.io/hoerllel/tmp:codebase_appointmentordisappointment
     volumes:
-      - ai_system:/tmp/knowledgeBase
-      - ai_system:/tmp/codeBase
+      - ai_system:/tmp
+      - ai_system:/tmp
     depends_on:
       - knowledge_base
       - activation_base
-    entrypoint: ["sh", "-c", "ls -R /tmp/codeBase && python3 applyANN.py"]
+    # entrypoint: ["sh", "-c", "ls -R /tmp/codeBase && python3 applyANN.py"]
+    command:
+      - /bin/sh
+      - "-c"
+      - |
+        rm -rf /tmp/codeBase/ && cp -r /codeBase/ /tmp/;
+        python /codeBase/applyANN.py
+
 
 volumes:
   ai_system:
-    driver: local
+    external: true

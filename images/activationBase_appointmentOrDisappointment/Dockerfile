@@ -4,9 +4,9 @@ LABEL maintainer="Dita Pelaj <dita_s@live.com> and Luísa Hörlle de Castro <lui
 LABEL description="Activation Base for AI Project 'Appointment or Disappointment'"
 LABEL course="Advanced AI-based Application Systems"
 
-RUN mkdir -p /tmp/activationBase
+RUN mkdir -p /activationBase
 
-COPY data/cleaned/activation_data.csv /tmp/activationBase/
-COPY images/activationBase_appointmentOrDisappointment/README.activationBase.md /tmp/activationBase/
+COPY activation_data.csv /activationBase/
+COPY README.activationBase.md /activationBase/
 
-CMD ["sh"]
+# CMD ["sh"]

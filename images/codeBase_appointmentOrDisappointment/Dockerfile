@@ -3,18 +3,18 @@ FROM tensorflow/tensorflow:latest-gpu
 LABEL maintainer="Dita Pelaj and Luísa Hörlle de Castro"
 LABEL description="Code Base for AI Project 'Appointment or Disappointment'"
 
-RUN pip3 install --no-cache-dir pandas scikit-learn joblib
+RUN pip3 install --no-cache-dir pandas scikit-learn joblib statsmodels
 
-RUN mkdir -p /tmp/codeBase
+RUN mkdir -p /codeBase
 
-COPY code/model/applyANN.py /tmp/codeBase/
-COPY code/model/feature_selection.py /tmp/codeBase/
-COPY code/model/applyOLS.py /tmp/codeBase/
-COPY images/codeBase_appointmentOrDisappointment/README.codeBase.md /tmp/codeBase/
+COPY applyANN.py /codeBase/
+COPY feature_selection.py /codeBase/
+COPY applyOLS.py /codeBase/
+COPY README.codeBase.md /codeBase/
 
-ADD code/model/model_metrics /tmp/codeBase/model_metrics/
+# ADD code/model/model_metrics /codeBase/model_metrics/
 
 
 
 # Set the default command to run the script
-CMD ["sh", "-c", "ls -lah /tmp/codeBase"]
+# CMD ["sh", "-c", "ls -lah /codeBase"]
