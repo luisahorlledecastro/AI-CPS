@@ -27,7 +27,6 @@ services:
     image: docker.io/hoerllel/tmp:codebase_appointmentordisappointment
     volumes:
       - ai_system:/tmp
-      - ai_system:/tmp
     depends_on:
       - knowledge_base
       - activation_base
@@ -37,7 +36,7 @@ services:
       - "-c"
       - |
         rm -rf /tmp/codeBase/ && cp -r /codeBase/ /tmp/;
-        python /codeBase/applyANN.py
+        python tmp/codeBase/applyANN.py
 
 
 volumes:

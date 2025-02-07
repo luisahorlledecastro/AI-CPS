@@ -1,4 +1,5 @@
-FROM tensorflow/tensorflow:latest-gpu
+# FROM tensorflow/tensorflow:latest-gpu
+FROM tensorflow/tensorflow
 
 LABEL maintainer="Dita Pelaj and Luísa Hörlle de Castro"
 LABEL description="Code Base for AI Project 'Appointment or Disappointment'"
@@ -11,6 +12,7 @@ COPY applyANN.py /codeBase/
 COPY feature_selection.py /codeBase/
 COPY applyOLS.py /codeBase/
 COPY README.codeBase.md /codeBase/
+COPY feature_columns.json /codeBase/
 
 # ADD code/model/model_metrics /codeBase/model_metrics/
 

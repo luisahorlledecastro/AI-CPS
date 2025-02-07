@@ -40,7 +40,7 @@ activation_data_y = activation_data["arrival_delay_m"]
 activation_data = activation_data[feature_columns]
 
 # Scale features using training data scaler
-scaler = joblib.load("model_metrics/ANN/scaler.pkl")
+scaler = joblib.load("../knowledgeBase/scaler.pkl")
 print("Scaler loaded successfully.")
 X_activation_scaled = scaler.transform(activation_data[feature_columns])
 
